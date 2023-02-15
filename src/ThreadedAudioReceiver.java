@@ -1,4 +1,5 @@
 import CMPC3M06.AudioPlayer;
+import CMPC3M06.AudioRecorder;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -11,6 +12,13 @@ public class ThreadedAudioReceiver extends ThreadedReceiver{
 
     public ThreadedAudioReceiver(int PORT){
         super(PORT);
+        try{
+            player = new AudioPlayer();
+        } catch (LineUnavailableException e) {
+            System.out.println("ERROR: AudioSender: Could not start audio player.");
+            e.printStackTrace();
+            System.exit(0);
+        }
     }
 
     @Override
