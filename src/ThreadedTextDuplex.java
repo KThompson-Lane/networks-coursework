@@ -6,11 +6,5 @@ public class ThreadedTextDuplex {
         ThreadedTextSender sender = new ThreadedTextSender(portNum, ipAddr);
         sender.Start();
         receiver.Start();
-//        while (sender.IsRunning())
-//        {
-//            //  Do nothing
-//            Thread.sleep(1000);
-//        }
-//        receiver.Terminate();
     }
 }
