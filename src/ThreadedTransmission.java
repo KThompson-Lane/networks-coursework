@@ -1,5 +1,3 @@
-import javax.xml.crypto.Data;
-
 import java.net.*;
 import java.io.*;
 
@@ -56,9 +54,5 @@ public abstract class ThreadedTransmission implements Runnable {
     {
         running = false;
         System.out.println("Terminating sender thread");
-    }
-    public boolean IsRunning()
-    {
-        return running;
     }
 }

@@ -24,9 +24,9 @@ public class ThreadedTextReceiver extends ThreadedReceiver{
             if (str.substring(0,4).equals("EXIT")){
                 Terminate();
             }
-        }  catch (SocketTimeoutException e) {
-            //System.out.println(".");
-        } catch (IOException e){
+        }catch (SocketTimeoutException e) {
+            System.out.println(".");
+        }catch (IOException e){
             System.out.println("ERROR: TextSender: Some random IO error occured!");
             e.printStackTrace();
         }

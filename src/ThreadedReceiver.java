@@ -9,16 +9,15 @@ public abstract class ThreadedReceiver implements Runnable {
     protected int PORT;
     protected DatagramSocket receivingSocket;
 
-    private Thread thread;
-
     public ThreadedReceiver(int PORT) {
+
         //  Set port number to argument
         this.PORT = PORT;
 
         //  Try and create socket for sending from
         try{
             this.receivingSocket = new DatagramSocket(PORT);
-            receivingSocket.setSoTimeout(500);
+            receivingSocket.setSoTimeout(1000);
         } catch (SocketException e){
             System.out.println("ERROR: TextSender: Could not open UDP socket to send from.");
             e.printStackTrace();
@@ -29,7 +28,7 @@ public abstract class ThreadedReceiver implements Runnable {
     public void Start()
     {
         //Make a new thread from this class
-        thread = new Thread(this);
+        Thread thread = new Thread(this);
         //Start the thread
         running = true;
         thread.start();
@@ -49,11 +48,5 @@ public abstract class ThreadedReceiver implements Runnable {
     public void Terminate()
     {
         running = false;
-        thread.interrupt();
-    }
-
-    public boolean IsRunning()
-    {
-        return running;
     }
 }
