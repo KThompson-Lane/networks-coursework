@@ -178,9 +178,10 @@ public class KeyExchanger {
             return publicKey;
         }
         protected String ReceiveResponse(PrivateKey privateKey) throws IOException {
-            //  Receive the response packet (note that the response string cant be more than 80 chars)
-            byte[] buffer = new byte[80];
-            DatagramPacket packet = new DatagramPacket(buffer, 0, 80);
+            //  Receive the encrypted response packet (note that the response string cant be more than 80 chars)
+            //TODO: Use a header and a bytebuffer to determine the response length, NOT MAGIC NUMBER
+            byte[] buffer = new byte[256];
+            DatagramPacket packet = new DatagramPacket(buffer, 0, 256);
             receivingSocket.receive(packet);
 
             byte[] plainText = DecryptMessage(buffer, privateKey);
