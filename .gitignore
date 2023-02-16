@@ -1,3 +1,6 @@
+# WAV files
+*.wav
+
 # IntelliJ folder
 .idea/
 
