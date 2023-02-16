@@ -1,3 +1,4 @@
+import javax.crypto.Cipher;
 import java.io.*;
 import java.net.*;
 import java.security.*;
@@ -23,7 +24,7 @@ public class KeyExchanger {
             System.exit(0);
         }
         Key publicKey = kp.getPublic();
-        Key privateKey = kp.getPrivate();
+        PrivateKey privateKey = kp.getPrivate();
 
         SecureSender sender = new SecureSender(destAddress, publicKey);
         SecureReceiver receiver = new SecureReceiver(PORT);
@@ -32,7 +33,7 @@ public class KeyExchanger {
         {
             sender.SendPublicKey();
             try{
-                response = receiver.ReceiveResponse();
+                response = receiver.ReceiveResponse(privateKey);
                 break;
             }catch (SocketTimeoutException e)
             {
@@ -118,7 +119,7 @@ public class KeyExchanger {
                 //  TODO: Use the public key to encrypt response
                 //  Send a response saying we got the key
                 String response = "got the key!";
-                byte[] buffer = response.getBytes();
+                byte[] buffer = EncryptMessage(response.getBytes());
                 //  Make a DatagramPacket from it, with client address and port number
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, clientIP, PORT);
                 //  Send it
@@ -126,6 +127,19 @@ public class KeyExchanger {
             }catch (IOException e){
                 System.out.println("ERROR: SecureSender: Some random IO error occured!");
                 e.printStackTrace();
+            }
+        }
+        public byte[] EncryptMessage(byte[] plainText)
+        {
+            Cipher cipher = null;
+            try {
+                cipher = Cipher.getInstance("RSA");
+                cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+                return cipher.doFinal(plainText);
+            } catch (Exception e) {
+                System.out.println("ERROR: SecureSender: Could not encrypt message!");
+                e.printStackTrace();
+                return null;
             }
         }
     }
@@ -163,17 +177,29 @@ public class KeyExchanger {
             }
             return publicKey;
         }
-        protected String ReceiveResponse() throws IOException {
+        protected String ReceiveResponse(PrivateKey privateKey) throws IOException {
             //  Receive the response packet (note that the response string cant be more than 80 chars)
             byte[] buffer = new byte[80];
             DatagramPacket packet = new DatagramPacket(buffer, 0, 80);
-
             receivingSocket.receive(packet);
 
-            //  Parse string from packet
-            String str = new String(buffer);
+            byte[] plainText = DecryptMessage(buffer, privateKey);
+
             //  Return response string
-            return str;
+            return new String(plainText);
+        }
+
+        public byte[] DecryptMessage(byte[] cipherText, PrivateKey privateKey) {
+            Cipher cipher = null;
+            try {
+                cipher = Cipher.getInstance("RSA");
+                cipher.init(Cipher.DECRYPT_MODE, privateKey);
+                return cipher.doFinal(cipherText);
+            } catch (Exception e) {
+                System.out.println("ERROR: SecureSender: Could not encrypt message!");
+                e.printStackTrace();
+                return null;
+            }
         }
     }
 }
