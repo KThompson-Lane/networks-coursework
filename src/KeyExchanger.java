@@ -1,13 +1,12 @@
 import java.io.*;
 import java.net.*;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 
 public class KeyExchanger {
     static int PORT = 55555;
-    static String destAddress = "192.168.0.1";
+    static String destAddress = "192.168.0.16";
 
     public void ExchangeAsHost()
     {
@@ -26,7 +25,7 @@ public class KeyExchanger {
         Key publicKey = kp.getPublic();
         Key privateKey = kp.getPrivate();
 
-        SecureSender sender = new SecureSender(PORT, destAddress, publicKey);
+        SecureSender sender = new SecureSender(destAddress, publicKey);
         SecureReceiver receiver = new SecureReceiver(PORT);
         String response;
         while(true)
@@ -50,11 +49,11 @@ public class KeyExchanger {
     public void ExchangeAsClient()
     {
         SecureReceiver receiver = new SecureReceiver(PORT);
-        byte[] test;
+        PublicKey receivedKey;
         while(true)
         {
             try{
-                test = receiver.ReceivePublicKey();
+                receivedKey = receiver.ReceivePublicKey();
                 break;
             }catch (SocketTimeoutException e)
             {
@@ -65,34 +64,33 @@ public class KeyExchanger {
             }
         }
         System.out.println("We received the key, sending response!");
-        //  TODO: Change null to the received key
-        SecureSender sender = new SecureSender(PORT, destAddress, null);
+        SecureSender sender = new SecureSender(destAddress, receivedKey);
         sender.SendResponse();
     }
 
 
     private class SecureSender
     {
-        private Key publicKey;
-        private int PORT;
+        private final Key publicKey;
         private InetAddress clientIP;
         private DatagramSocket sendingSocket;
 
-        public SecureSender(int PORT, String clientAddress, Key pub) {
-            this.PORT = PORT;
+        public SecureSender(String clientAddress, Key pub) {
+
             //  Try and setup client IP from argument
             try {
                 clientIP = InetAddress.getByName(clientAddress);
             } catch (UnknownHostException e) {
-                System.out.println("ERROR: TextSender: Could not find client IP");
+                System.out.println("ERROR: SecureSender: Could not find client IP");
                 e.printStackTrace();
                 System.exit(0);
             }
+
             //  Try and create socket for sending from
             try{
                 this.sendingSocket = new DatagramSocket();
             } catch (SocketException e){
-                System.out.println("ERROR: TextSender: Could not open UDP socket to send from.");
+                System.out.println("ERROR: SecureSender: Could not open UDP socket to send from.");
                 e.printStackTrace();
                 System.exit(0);
             }
@@ -109,9 +107,8 @@ public class KeyExchanger {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, clientIP, PORT);
                 //  Send it
                 sendingSocket.send(packet);
-
             }catch (IOException e){
-                System.out.println("ERROR: TextSender: Some random IO error occured!");
+                System.out.println("ERROR: SecureSender: Some random IO error occured!");
                 e.printStackTrace();
             }
         }
@@ -127,47 +124,55 @@ public class KeyExchanger {
                 //  Send it
                 sendingSocket.send(packet);
             }catch (IOException e){
-                System.out.println("ERROR: TextSender: Some random IO error occured!");
+                System.out.println("ERROR: SecureSender: Some random IO error occured!");
                 e.printStackTrace();
             }
         }
     }
     private class SecureReceiver
     {
-        private Key publicKey;
-        private int PORT;
         private DatagramSocket receivingSocket;
 
         public SecureReceiver(int PORT) {
-            this.PORT = PORT;
             //  Try and create socket for sending from
             try{
                 this.receivingSocket = new DatagramSocket(PORT);
                 receivingSocket.setSoTimeout(1000);
             } catch (SocketException e){
-                System.out.println("ERROR: TextSender: Could not open UDP socket to send from.");
+                System.out.println("ERROR: SecureReceiver: Could not open UDP socket to send from.");
                 e.printStackTrace();
                 System.exit(0);
             }
         }
 
-        protected byte[] ReceivePublicKey() throws IOException {
-            //Receive a DatagramPacket (note that the string cant be more than 80 chars)
+        protected PublicKey ReceivePublicKey() throws IOException {
+            //  Initialize a buffer to store our public key
+            //TODO: Figure out correct size for buffer
             byte[] buffer = new byte[1000];
             DatagramPacket packet = new DatagramPacket(buffer, 0, 1000);
             receivingSocket.receive(packet);
-            return buffer;
+
+            //  Try and parse a public key from the buffer and store result in publicKey
+            PublicKey publicKey = null;
+            try {
+                publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(buffer));
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                System.out.println("ERROR: SecureReceiver: Could not create an RSA key pair generator.");
+                e.printStackTrace();
+                System.exit(0);
+            }
+            return publicKey;
         }
         protected String ReceiveResponse() throws IOException {
-            //  Receive a DatagramPacket (note that the string cant be more than 80 chars)
+            //  Receive the response packet (note that the response string cant be more than 80 chars)
             byte[] buffer = new byte[80];
             DatagramPacket packet = new DatagramPacket(buffer, 0, 80);
 
             receivingSocket.receive(packet);
 
-            //Get a string from the byte buffer
+            //  Parse string from packet
             String str = new String(buffer);
-            //  Return it
+            //  Return response string
             return str;
         }
     }
