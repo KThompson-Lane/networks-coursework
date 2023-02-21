@@ -3,6 +3,8 @@ public class Main {
         //KeyExchanger exchanger = new KeyExchanger();
         //exchanger.ExchangeAsClient();
 
-        Connector connector = new Connector();
+        int portNum = 55555;
+        String ipAddr = "192.168.0.18";
+        Connector connector = new Connector(portNum, ipAddr);
     }
 }

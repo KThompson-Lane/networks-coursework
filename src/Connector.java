@@ -2,15 +2,45 @@ import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;
 
-public class Connector { //todo - think of better name
-    boolean isHost = true;
+public class Connector {
     private InetAddress clientIP;
     private DatagramSocket sendingSocket;
 
     private DatagramSocket receivingSocket;
 
-    int portNum = 55555;
-    String ipAddr = "192.168.0.18";
+
+
+    public Connector(int portNum, String ipAddr) {
+        //Set up Sending Socket
+        //  Try and setup client IP from argument
+        try {
+            clientIP = InetAddress.getByName(ipAddr);
+        } catch (UnknownHostException e) {
+            System.out.println("ERROR: SecureSender: Could not find client IP");
+            e.printStackTrace();
+            System.exit(0);
+        }
+
+        //  Try and create socket for sending from
+        try{
+            this.sendingSocket = new DatagramSocket();
+        } catch (SocketException e){
+            System.out.println("ERROR: SecureSender: Could not open UDP socket to send from.");
+            e.printStackTrace();
+            System.exit(0);
+        }
+
+        //Set up Receiving Socket
+        //  Try and create socket for sending from
+        try{
+            this.receivingSocket = new DatagramSocket(portNum);
+            receivingSocket.setSoTimeout(1000);
+        } catch (SocketException e){
+            System.out.println("ERROR: SecureReceiver: Could not open UDP socket to send from.");
+            e.printStackTrace();
+            System.exit(0);
+        }
+    }
 
 
     public void ConnectAsHost() {
@@ -92,43 +122,7 @@ public class Connector { //todo - think of better name
         byte[] buffer = new byte[80];
         DatagramPacket packet = new DatagramPacket(buffer, 0, 80);
 
-        //try {
-            receivingSocket.receive(packet);
-            return new String(buffer); //todo - might not need to return anything
-        //} catch (IOException e) {
-        //    throw new RuntimeException(e);
-        //}
-    }
-
-    public Connector() {
-        //Set up Sending Socket
-        //  Try and setup client IP from argument
-        try {
-            clientIP = InetAddress.getByName(ipAddr);
-        } catch (UnknownHostException e) {
-            System.out.println("ERROR: SecureSender: Could not find client IP");
-            e.printStackTrace();
-            System.exit(0);
-        }
-
-        //  Try and create socket for sending from
-        try{
-            this.sendingSocket = new DatagramSocket();
-        } catch (SocketException e){
-            System.out.println("ERROR: SecureSender: Could not open UDP socket to send from.");
-            e.printStackTrace();
-            System.exit(0);
-        }
-
-        //Set up Receiving Socket
-        //  Try and create socket for sending from
-        try{
-            this.receivingSocket = new DatagramSocket(portNum);
-            receivingSocket.setSoTimeout(1000);
-        } catch (SocketException e){
-            System.out.println("ERROR: SecureReceiver: Could not open UDP socket to send from.");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        receivingSocket.receive(packet);
+        return new String(buffer); //todo - might not need to return anything
     }
 }
