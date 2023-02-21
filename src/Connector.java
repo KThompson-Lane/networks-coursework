@@ -4,13 +4,17 @@ import java.util.Arrays;
 
 public class Connector {
     private InetAddress clientIP;
+    private int port;
     private DatagramSocket sendingSocket;
 
     private DatagramSocket receivingSocket;
 
 
 
+
+
     public Connector(int portNum, String ipAddr) {
+        port = portNum;
         //Set up Sending Socket
         //  Try and setup client IP from argument
         try {
@@ -33,7 +37,7 @@ public class Connector {
         //Set up Receiving Socket
         //  Try and create socket for sending from
         try{
-            this.receivingSocket = new DatagramSocket(portNum);
+            this.receivingSocket = new DatagramSocket(port);
             receivingSocket.setSoTimeout(1000);
         } catch (SocketException e){
             System.out.println("ERROR: SecureReceiver: Could not open UDP socket to send from.");
@@ -102,14 +106,12 @@ public class Connector {
 
     public void Send(String message) //todo - might want more descriptive name
     {
-        String str = message;
-        byte[] buffer = str.getBytes();
-        int portNum = 55555;
+        byte[] buffer = message.getBytes();
 
         //Invite Client
         try{
             //  Make a DatagramPacket from it, with client address and port number
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, clientIP, portNum);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, clientIP, port);
             //  Send it
             sendingSocket.send(packet);
         }catch (IOException e){
