@@ -3,11 +3,14 @@ import java.net.*;
 import java.util.Arrays;
 
 public class Connector { //todo - think of better name
-    boolean isHost;
+    boolean isHost = true;
     private InetAddress clientIP;
     private DatagramSocket sendingSocket;
 
     private DatagramSocket receivingSocket;
+
+    int portNum = 55555;
+    String ipAddr = "192.168.0.18";
 
 
     public void ConnectAsHost() {
@@ -89,19 +92,19 @@ public class Connector { //todo - think of better name
         byte[] buffer = new byte[80];
         DatagramPacket packet = new DatagramPacket(buffer, 0, 80);
 
-        try {
+        //try {
             receivingSocket.receive(packet);
             return new String(buffer); //todo - might not need to return anything
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        //} catch (IOException e) {
+        //    throw new RuntimeException(e);
+        //}
     }
 
-    public void SecureSender(String clientAddress) { //todo - rename to 'SetupSender'?
-
+    public Connector() {
+        //Set up Sending Socket
         //  Try and setup client IP from argument
         try {
-            clientIP = InetAddress.getByName(clientAddress);
+            clientIP = InetAddress.getByName(ipAddr);
         } catch (UnknownHostException e) {
             System.out.println("ERROR: SecureSender: Could not find client IP");
             e.printStackTrace();
@@ -116,12 +119,11 @@ public class Connector { //todo - think of better name
             e.printStackTrace();
             System.exit(0);
         }
-    }
 
-    public void SecureReceiver(int PORT) { //todo - rename to 'SetupReceiver'?
+        //Set up Receiving Socket
         //  Try and create socket for sending from
         try{
-            this.receivingSocket = new DatagramSocket(PORT);
+            this.receivingSocket = new DatagramSocket(portNum);
             receivingSocket.setSoTimeout(1000);
         } catch (SocketException e){
             System.out.println("ERROR: SecureReceiver: Could not open UDP socket to send from.");
@@ -129,23 +131,4 @@ public class Connector { //todo - think of better name
             System.exit(0);
         }
     }
-
-
-
-    public void main(String[] args) {
-        int portNum = 55555;
-        String ipAddr = "192.168.0.1";
-
-        SecureSender(ipAddr);
-        SecureReceiver(portNum);
-
-        if (isHost == true) {
-            ConnectAsHost();
-        }
-        else {
-            ConnectAsClient();
-        }
-    }
-
-
 }
