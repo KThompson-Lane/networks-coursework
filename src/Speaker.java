@@ -1,10 +1,15 @@
+import CMPC3M06.AudioRecorder;
+
+import javax.sound.sampled.LineUnavailableException;
+import java.io.IOException;
 import java.net.*;
 
 public class Speaker implements Runnable {
     private boolean running;
-    protected int port;
-    protected InetAddress destinationAddress;
-    protected DatagramSocket sendingSocket;
+    private final int port;
+    private InetAddress destinationAddress;
+    private DatagramSocket sendingSocket;
+    private AudioRecorder recorder;
 
     public Speaker(int portNum, String destAddress) {
         //  Set port number to argument
@@ -24,6 +29,14 @@ public class Speaker implements Runnable {
             this.sendingSocket = new DatagramSocket();
         } catch (SocketException e){
             System.out.println("ERROR: Speaker: Could not open UDP socket to send from.");
+            e.printStackTrace();
+            System.exit(0);
+        }
+        //  Try and create recorder
+        try{
+            recorder = new AudioRecorder();
+        } catch (LineUnavailableException e) {
+            System.out.println("ERROR: Speaker: Could not start audio recorder.");
             e.printStackTrace();
             System.exit(0);
         }
@@ -51,9 +64,30 @@ public class Speaker implements Runnable {
     public void TransmitPayload()
     {
         //  First receive audio block from recorder
+        //  Returns 32 ms (512 byte) audio blocks
+        byte[] audioBlock = null;
+        try {
+            audioBlock = recorder.getBlock();
+        } catch (IOException e) {
+            System.out.println("ERROR: Speaker: Some random IO error occurred!");
+            e.printStackTrace();
+            return;
+        }
+
         //  Then process audio block with the VOIP layer (i.e. numbering)
+
         //  Then pass packet to SecurityLayer to encrypt/authenticate
+
         //  Finally send the encrypted packet to the other client
+        //  Make a DatagramPacket with client address and port number
+        DatagramPacket packet = new DatagramPacket(audioBlock, audioBlock.length, destinationAddress, port);
+        //Send it
+        try {
+            sendingSocket.send(packet);
+        } catch (IOException e) {
+            System.out.println("ERROR: Speaker: Some random IO error occurred!");
+            e.printStackTrace();
+        }
     }
     public void Terminate()
     {
