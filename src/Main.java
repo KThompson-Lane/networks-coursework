@@ -16,14 +16,13 @@ public class Main {
             connector.ConnectAsClient();
 
         //TODO: Consider merging connector and KeyExchanger class
-
         //  After establishing connection, determine shared secret key
         KeyExchanger keyExchanger = new KeyExchanger(portNum, ipAddr);
         long secretKey;
         if(Host)
-            keyExchanger.ExchangeAsHost();
+            secretKey = keyExchanger.ExchangeAsHost();
         else
-            keyExchanger.ExchangeAsClient();
+            secretKey = keyExchanger.ExchangeAsClient();
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number
