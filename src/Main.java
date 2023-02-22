@@ -7,24 +7,23 @@ public class Main {
         String ipAddr = "192.168.0.18";
         boolean Host = false;
 
-        //TODO: Consider merging connector and KeyExchanger class
         Connector connector = new Connector(portNum, ipAddr);
-        KeyExchanger keyExchanger = new KeyExchanger(portNum, ipAddr);
 
-        long secretKey;
-
-        //1: Set up our connection as either host or client and establish a shared secret key
+        //1: Set up our connection as either host or client
         if(Host)
-        {
             connector.ConnectAsHost();
-            //  After establishing connection, exchange keys
-            secretKey = keyExchanger.ExchangeAsHost();
-        }
-        else{
+        else
             connector.ConnectAsClient();
-            //  After establishing connection, exchange keys
-            secretKey = keyExchanger.ExchangeAsClient();
-        }
+
+        //TODO: Consider merging connector and KeyExchanger class
+
+        //  After establishing connection, determine shared secret key
+        KeyExchanger keyExchanger = new KeyExchanger(portNum, ipAddr);
+        long secretKey;
+        if(Host)
+            keyExchanger.ExchangeAsHost();
+        else
+            keyExchanger.ExchangeAsClient();
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number
