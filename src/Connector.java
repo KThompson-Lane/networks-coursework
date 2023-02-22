@@ -10,9 +10,6 @@ public class Connector {
     private DatagramSocket receivingSocket;
 
 
-
-
-
     public Connector(int portNum, String ipAddr) {
         port = portNum;
         //Set up Sending Socket
@@ -67,6 +64,8 @@ public class Connector {
                 e.printStackTrace();
             }
         }
+        sendingSocket.close();
+        receivingSocket.close();
     }
 
     public void ConnectAsClient(){
@@ -102,6 +101,8 @@ public class Connector {
                 e.printStackTrace();
             }
         }
+        receivingSocket.close();
+        sendingSocket.close();
     }
 
     public void Send(String message) //todo - might want more descriptive name
