@@ -41,15 +41,14 @@ public class KeyExchanger {
             System.exit(0);
         }
     }
-
-    public void ExchangeAsHost() {
+    public long ExchangeAsHost() {
         // Generate our public key and send to client waiting for theirs in response
         DHKey key = new DHKey();
-        //  Send key
-        SendKey(key.GetPublicKey());
         long otherKey;
         while (true)
         {
+            //  Send key
+            SendKey(key.GetPublicKey());
             //  Try and receive response key
             try{
                 otherKey = ReceiveKey();
@@ -68,13 +67,15 @@ public class KeyExchanger {
                 e.printStackTrace();
             }
         }
-        System.out.println("Received other key, shared secret is: " + key.GetSecretKey(otherKey));
 
-        sendingSocket.close();
+        long secretKey = key.GetSecretKey(otherKey);
+        System.out.println("Received other key, shared secret is: " + secretKey);
         receivingSocket.close();
+        sendingSocket.close();
+        return secretKey;
     }
 
-    public void ExchangeAsClient(){
+    public long ExchangeAsClient(){
         // Generate our public key and wait for hosts sending ours in response
         DHKey key = new DHKey();
         //  Wait for host key
@@ -88,7 +89,7 @@ public class KeyExchanger {
             }catch (SocketTimeoutException ignored)
             {
                 //  If timeout, send again
-                System.out.println("CLIENT: timed out, resending");
+                System.out.println("CLIENT: timed out");
             }
             catch (IOException e)
             {
@@ -116,9 +117,11 @@ public class KeyExchanger {
                 e.printStackTrace();
             }
         }
-        System.out.println("Received other key, shared secret is: " + key.GetSecretKey(otherKey));
+        long secretKey = key.GetSecretKey(otherKey);
+        System.out.println("Received other key, shared secret is: " + secretKey);
         receivingSocket.close();
         sendingSocket.close();
+        return secretKey;
     }
 
     public void SendKey(long key)
