@@ -65,6 +65,7 @@ public class Connector {
             }
         }
         sendingSocket.close();
+        receivingSocket.close();
     }
 
     public void ConnectAsClient(){
@@ -101,6 +102,7 @@ public class Connector {
             }
         }
         receivingSocket.close();
+        sendingSocket.close();
     }
 
     public void Send(String message) //todo - might want more descriptive name
