@@ -3,6 +3,7 @@ import CMPC3M06.AudioRecorder;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
 
 public class Speaker implements Runnable {
     private boolean running;
@@ -10,6 +11,8 @@ public class Speaker implements Runnable {
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
+
+    private short packetCount = 0;
 
     public Speaker(int portNum, String destAddress) {
         //  Set port number to argument
@@ -32,6 +35,7 @@ public class Speaker implements Runnable {
             e.printStackTrace();
             System.exit(0);
         }
+
         //  Try and create recorder
         try{
             recorder = new AudioRecorder();
@@ -75,6 +79,11 @@ public class Speaker implements Runnable {
         }
 
         //  Then process audio block with the VOIP layer (i.e. numbering)
+        ByteBuffer numberedPacket = ByteBuffer.allocate(514);
+        packetCount++;
+        short packetNum = packetCount;
+        numberedPacket.putShort(packetNum);
+        numberedPacket.put(numberedPacket);
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
 
