@@ -8,7 +8,7 @@ public class DHKey {
     private final long P, G, seed;
     public DHKey() {
         //TODO: Replace with a safe prime
-        this.P = 25919;
+        this.P = 854807;
         this.G = 2;
         //TODO: Replace with a better random generator
         SecureRandom random = new SecureRandom();

@@ -35,7 +35,7 @@ public class SecurityLayer {
     public static void main(String[] args) {
         //TEST
         long input = 123456;
-        long secretKey = 3618;
+        long secretKey = 380031;
         ByteBuffer inputBuff = ByteBuffer.allocate(64);
         ByteBuffer cipherBuff = ByteBuffer.allocate(64);
         ByteBuffer outputBuff = ByteBuffer.allocate(64);
