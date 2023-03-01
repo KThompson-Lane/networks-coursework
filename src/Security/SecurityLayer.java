@@ -8,17 +8,48 @@ import CMPC3M06.AudioRecorder;
 import javax.sound.sampled.LineUnavailableException;
 
 public class SecurityLayer {
-
-    public static void main(String[] args)
-    {
-        try {
-            TestAudio(832139);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private final long secretKey;
+    private final boolean enableEncryption;
+    public SecurityLayer(long secretKey, boolean enableEncryption) {
+        this.secretKey = secretKey;
+        this.enableEncryption = enableEncryption;
     }
-    public static void TestNumber(int input, int key)
+
+    public byte[] EncryptAndAuth(byte[] dataPacket)
     {
+        byte[] securePacket = dataPacket;
+        //  Authenticate
+            //TODO: Append authentication header
+        //  Encrypt
+        if(enableEncryption)
+            securePacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+        //  Return secure packet
+        return securePacket;
+
+    }
+    public byte[] DecryptAndAuth(byte[] encryptedPacket)
+    {
+        byte[] dataPacket = encryptedPacket;
+        //  Authenticate
+            //TODO: Check authentication header
+
+        //  Decrypt
+        if(enableEncryption)
+            dataPacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+
+        //  Return decrypted data packet
+        return dataPacket;
+    }
+
+    public static void main(String[] args) {
+        TestNumber();
+        TestAudio();
+    }
+
+    public static void TestNumber()
+    {
+        long key = 832139;
+        long input = 123456789;
         ByteBuffer inputBuff = ByteBuffer.allocate(64);
         ByteBuffer cipherBuff = ByteBuffer.allocate(64);
         ByteBuffer outputBuff = ByteBuffer.allocate(64);
@@ -33,10 +64,14 @@ public class SecurityLayer {
 
         System.out.println("Input = " +input);
         System.out.println("Encrypted input = " + cipherInput);
-        System.out.println("Decrypted output = " +decryptOutput);
+        System.out.println("Decrypted output = " + decryptOutput);
     }
-    public static void TestAudio(int key) throws IOException
+
+    public static void TestAudio()
     {
+        long key = 832139;
+        long input = 123456789;
+
         boolean decrypt = false;
         AudioRecorder recorder = null;
         AudioPlayer player = null;
@@ -48,17 +83,17 @@ public class SecurityLayer {
             e.printStackTrace();
             System.exit(0);
         }
+
         while(true)
         {
-            byte[] block = recorder.getBlock();
-            byte[] encryptedAudio = SimpleEncryption.EncryptData(block, key);
-            byte[] decryptedAudio = SimpleEncryption.DecryptData(encryptedAudio, key);
-            if(decrypt)
-            {
-                player.playBlock(decryptedAudio);
-            }
-            else {
-                player.playBlock(encryptedAudio);
+            try {
+                byte[] block = recorder.getBlock();
+                block = SimpleEncryption.EncryptData(block, key);
+                if(decrypt)
+                    block = SimpleEncryption.DecryptData(block, key);
+                player.playBlock(block);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }

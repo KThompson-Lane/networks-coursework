@@ -7,19 +7,16 @@ import java.io.IOException;
 import java.net.*;
 
 public class Speaker implements Runnable {
+    private static boolean encrypt = true;
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
-    private final long key;
-
-    private boolean encrypt = true;
-
+    private final SecurityLayer securityLayer;
     public Speaker(int portNum, String destAddress, long key) {
         //  Set port number to argument
         this.port = portNum;
-        this.key = key;
         //  Try and setup client IP from argument
         try {
             destinationAddress = InetAddress.getByName(destAddress);
@@ -45,6 +42,8 @@ public class Speaker implements Runnable {
             e.printStackTrace();
             System.exit(0);
         }
+        //  Set up security layer
+        securityLayer = new SecurityLayer(key, encrypt);
     }
 
     public void Start()
@@ -82,11 +81,11 @@ public class Speaker implements Runnable {
         //  Then process audio block with the VOIP layer (i.e. numbering)
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
-        byte[] encryptedAudio = SimpleEncryption.EncryptData(audioBlock, key);
+        audioBlock = securityLayer.EncryptAndAuth(audioBlock);
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(encrypt? encryptedAudio : audioBlock, audioBlock.length, destinationAddress, port);
+        DatagramPacket packet = new DatagramPacket(audioBlock, audioBlock.length, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);
