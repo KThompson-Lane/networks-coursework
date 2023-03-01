@@ -1,6 +1,6 @@
 import CMPC3M06.AudioPlayer;
 import Security.SecurityLayer;
-import Security.SimpleEncryption;
+import Security.UnableToAuthenticateException;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -17,13 +17,13 @@ public class Listener implements Runnable {
     private AudioPlayer player;
     private final SecurityLayer securityLayer;
     List<Integer> packetNums;
-    
+
     public Listener(int portNum, long key) {
         port = portNum;
         packetNums = new ArrayList<>();
 
         //  Set up Receiving Socket
-        
+
         try{
             this.receivingSocket = new DatagramSocket(port);
             //TODO: Investigate what timeout we should have
@@ -88,7 +88,13 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-        audio = securityLayer.DecryptAndAuth(audio);
+        try{
+            audio = securityLayer.AuthAndDecrypt(audio);
+        }catch (UnableToAuthenticateException e)
+        {
+            //TODO: Do something when we receive an unauthentic packet
+            return;
+        }
 
         //  Then process decrypted audio packet with the VOIP layer
 

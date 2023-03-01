@@ -9,33 +9,38 @@ import javax.sound.sampled.LineUnavailableException;
 
 public class SecurityLayer {
     private final long secretKey;
+    private final Authenticator authenticator;
     private final boolean enableEncryption;
     public SecurityLayer(long secretKey, boolean enableEncryption) {
         this.secretKey = secretKey;
         this.enableEncryption = enableEncryption;
+        authenticator = new Authenticator(Long.hashCode(secretKey));
     }
 
-    public byte[] EncryptAndAuth(byte[] dataPacket)
+    public byte[] EncryptAndSign(byte[] dataPacket)
     {
         byte[] securePacket = dataPacket;
-        //  Authenticate
-            //TODO: Append authentication header
         //  Encrypt
         if(enableEncryption)
             securePacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+        //  Authenticate
+        securePacket = authenticator.SignPacket(securePacket);
         //  Return secure packet
         return securePacket;
-
     }
-    public byte[] DecryptAndAuth(byte[] encryptedPacket)
-    {
-        byte[] dataPacket = encryptedPacket;
+
+    public byte[] AuthAndDecrypt(byte[] encryptedPacket) throws UnableToAuthenticateException {
+        ByteBuffer EncryptedPacketBuff = ByteBuffer.wrap(encryptedPacket);
         //  Authenticate
-            //TODO: Check authentication header
-        //  Decrypt
+            //  Throw an exception if we cannot authenticate
+        if(!authenticator.Authenticate(EncryptedPacketBuff.array()))
+            throw new UnableToAuthenticateException();
+
+        //  After authenticating decrypt packet
+        byte[] dataPacket = new byte[512];
+        EncryptedPacketBuff.get(4, dataPacket);
         if(enableEncryption)
             dataPacket = SimpleEncryption.DecryptData(dataPacket, secretKey);
-
         //  Return decrypted data packet
         return dataPacket;
     }

@@ -1,6 +1,5 @@
 import CMPC3M06.AudioRecorder;
 import Security.SecurityLayer;
-import Security.SimpleEncryption;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -16,7 +15,7 @@ public class Speaker implements Runnable {
     private AudioRecorder recorder;
     private short packetCount;
     private final SecurityLayer securityLayer;
-    
+
     public Speaker(int portNum, String destAddress, long key) {
         //  Set port number to argument
         this.port = portNum;
@@ -90,7 +89,7 @@ public class Speaker implements Runnable {
         numberedPacket.putShort(packetNum);
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
-        audioBlock = securityLayer.EncryptAndAuth(audioBlock);
+        audioBlock = securityLayer.EncryptAndSign(audioBlock);
         numberedPacket.put(audioBlock);
 
         //  Finally send the encrypted packet to the other client
