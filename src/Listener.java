@@ -88,7 +88,7 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-        buffer = securityLayer.DecryptAndAuth(buffer);
+        audio = securityLayer.DecryptAndAuth(audio);
 
         //  Then process decrypted audio packet with the VOIP layer
 

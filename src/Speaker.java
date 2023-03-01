@@ -88,10 +88,10 @@ public class Speaker implements Runnable {
         packetCount++;
         short packetNum = packetCount;
         numberedPacket.putShort(packetNum);
-        numberedPacket.put(audioBlock);
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
         audioBlock = securityLayer.EncryptAndAuth(audioBlock);
+        numberedPacket.put(audioBlock);
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
