@@ -12,11 +12,12 @@ public class Speaker implements Runnable {
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
 
-    private short packetCount = 0;
+    private short packetCount;
 
     public Speaker(int portNum, String destAddress) {
         //  Set port number to argument
         this.port = portNum;
+        packetCount = 0;
 
         //  Try and setup client IP from argument
         try {
@@ -61,6 +62,7 @@ public class Speaker implements Runnable {
         {
             //  Send payload in here
             TransmitPayload();
+            //System.out.println("Speaking...");
         }
         //  Close socket then terminates thread
         sendingSocket.close();
@@ -83,13 +85,13 @@ public class Speaker implements Runnable {
         packetCount++;
         short packetNum = packetCount;
         numberedPacket.putShort(packetNum);
-        numberedPacket.put(numberedPacket);
+        numberedPacket.put(audioBlock);
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(audioBlock, audioBlock.length, destinationAddress, port);
+        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), 514, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);
