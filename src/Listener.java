@@ -5,6 +5,9 @@ import Security.SimpleEncryption;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Listener implements Runnable {
     private static boolean decrypt = true;
@@ -13,10 +16,14 @@ public class Listener implements Runnable {
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
     private final SecurityLayer securityLayer;
-
+    List<Integer> packetNums;
+    
     public Listener(int portNum, long key) {
         port = portNum;
+        packetNums = new ArrayList<>();
+
         //  Set up Receiving Socket
+        
         try{
             this.receivingSocket = new DatagramSocket(port);
             //TODO: Investigate what timeout we should have
@@ -60,10 +67,18 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        byte[] buffer = new byte[512];
-        DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(514);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 514);
+
+        byte[] audio = new byte[512];
+
         try {
             receivingSocket.receive(packet);
+            int packetNum = packetBuffer.getShort();
+            packetNums.add(packetNum); //todo - sort this
+            //System.out.println("Packet Received: " + packetNum);
+
+            packetBuffer.get(audio);
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
         } catch (IOException e){
@@ -73,17 +88,16 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-        buffer = securityLayer.DecryptAndAuth(buffer);
+        audio = securityLayer.DecryptAndAuth(audio);
 
         //  Then process decrypted audio packet with the VOIP layer
 
         //  Finally output the processed audio block to the speaker
         try {
-            player.playBlock(buffer);
+            player.playBlock(audio);
         } catch (IOException e) {
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();
-            return;
         }
     }
     public void Terminate()
