@@ -11,7 +11,7 @@ public class Listener implements Runnable {
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
     private final long key;
-    private boolean decrypt;
+    private boolean decrypt = false;
 
     public Listener(int portNum, long key) {
         this.key = key;

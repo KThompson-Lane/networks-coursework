@@ -27,12 +27,15 @@ public class SimpleEncryption {
                 dataSeg = dataSeg ^ firstKey;
                 dataSeg = rightRotate(dataSeg, firstKey % 8);
                 dataSeg = dataSeg ^ leftRotate(firstKey, firstKey % 8);
+                dataSeg = dataSeg ^ rightRotate(secondKey, secondKey % 8);
+
             }
             else
             {
                 dataSeg = dataSeg ^ secondKey;
-                dataSeg = leftRotate(dataSeg, firstKey % 8);
-                dataSeg = dataSeg ^ rightRotate(firstKey, firstKey % 8);
+                dataSeg = leftRotate(dataSeg, secondKey % 8);
+                dataSeg = dataSeg ^ rightRotate(secondKey, secondKey % 8);
+                dataSeg = dataSeg ^ leftRotate(firstKey, firstKey % 8);
 
             }
             encryptBuff.putInt(dataSeg);
@@ -54,14 +57,16 @@ public class SimpleEncryption {
             int dataSeg = cipherText.getInt();
             if(i % 2 == 0)
             {
+                dataSeg = dataSeg ^ leftRotate(secondKey, secondKey % 8);
                 dataSeg = dataSeg ^ rightRotate(firstKey, firstKey % 8);
                 dataSeg = leftRotate(dataSeg, firstKey % 8);
                 dataSeg = dataSeg ^ firstKey;
             }
             else
             {
-                dataSeg = dataSeg ^ leftRotate(firstKey, firstKey % 8);
-                dataSeg = rightRotate(dataSeg, firstKey % 8);
+                dataSeg = dataSeg ^ rightRotate(firstKey, firstKey % 8);
+                dataSeg = dataSeg ^ leftRotate(secondKey, secondKey % 8);
+                dataSeg = rightRotate(dataSeg, secondKey % 8);
                 dataSeg = dataSeg ^ secondKey;
             }
             decryptBuff.putInt(dataSeg);
