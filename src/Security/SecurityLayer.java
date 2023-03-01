@@ -32,15 +32,15 @@ public class SecurityLayer {
         byte[] dataPacket = encryptedPacket;
         //  Authenticate
             //TODO: Check authentication header
-
         //  Decrypt
         if(enableEncryption)
-            dataPacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+            dataPacket = SimpleEncryption.DecryptData(dataPacket, secretKey);
 
         //  Return decrypted data packet
         return dataPacket;
     }
 
+    //Methods for testing the security layer functionality
     public static void main(String[] args) {
         TestNumber();
         TestAudio();

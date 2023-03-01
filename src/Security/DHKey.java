@@ -37,6 +37,8 @@ public class DHKey {
         //  otherKey^seed mod P
         return modPow(otherKey, seed, P);
     }
+
+    //Methods for testing the DHKey generator functionality
     public static void main(String[] args)
     {
         DHKey hostKey = new DHKey();
