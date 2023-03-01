@@ -1,4 +1,6 @@
 import CMPC3M06.AudioPlayer;
+import Security.SecurityLayer;
+import Security.SimpleEncryption;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -8,14 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Listener implements Runnable {
+    private static boolean decrypt = true;
     private final int port;
     private boolean running;
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
-
+    private final SecurityLayer securityLayer;
     List<Integer> packetNums;
-
-    public Listener(int portNum) {
+    
+    public Listener(int portNum, long key) {
         port = portNum;
         packetNums = new ArrayList<>();
 
@@ -38,6 +41,8 @@ public class Listener implements Runnable {
             e.printStackTrace();
             System.exit(0);
         }
+        //  Set up security layer
+        securityLayer = new SecurityLayer(key, decrypt);
     }
     public void Start()
     {
@@ -83,6 +88,8 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
+        audio = securityLayer.DecryptAndAuth(audio);
+
         //  Then process decrypted audio packet with the VOIP layer
 
         //  Finally output the processed audio block to the speaker
