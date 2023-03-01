@@ -12,7 +12,7 @@ public class DHKey {
         this.G = 2;
         //TODO: Replace with a better random generator
         SecureRandom random = new SecureRandom();
-        this.seed = random.nextLong(2, P-1);;
+        this.seed = random.nextLong(2l, P-1);
     }
 
     private static long modPow(long g, long seed, long p)
