@@ -55,7 +55,6 @@ public class Listener implements Runnable {
         {
             //  Receive payload in here
             ReceivePayload();
-            //System.out.println("Listening...");
         }
         //  Close socket then terminates thread
         receivingSocket.close();
@@ -66,19 +65,17 @@ public class Listener implements Runnable {
         ByteBuffer packetBuffer = ByteBuffer.allocate(514);
         DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 514);
 
-
         byte[] audio = new byte[512];
 
         try {
             receivingSocket.receive(packet);
             int packetNum = packetBuffer.getShort();
             packetNums.add(packetNum); //todo - sort this
-            System.out.println("Packet Received: " + packetNum);
+            //System.out.println("Packet Received: " + packetNum);
 
             packetBuffer.get(audio);
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
-            //System.out.println("Listener timed out...");
         } catch (IOException e){
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();

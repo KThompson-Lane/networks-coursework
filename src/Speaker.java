@@ -62,7 +62,6 @@ public class Speaker implements Runnable {
         {
             //  Send payload in here
             TransmitPayload();
-            //System.out.println("Speaking...");
         }
         //  Close socket then terminates thread
         sendingSocket.close();
