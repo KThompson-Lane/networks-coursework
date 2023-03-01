@@ -26,9 +26,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number
-        Listener listener = new Listener(portNum);
+        Listener listener = new Listener(portNum, secretKey);
         //  New thread for speak, passing our IP address and port
-        Speaker speaker = new Speaker(portNum, ipAddr);
+        Speaker speaker = new Speaker(portNum, ipAddr, secretKey);
 
         //  Run these threads in a loop
         listener.Start();

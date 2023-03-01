@@ -1,4 +1,6 @@
 import CMPC3M06.AudioRecorder;
+import Security.SecurityLayer;
+import Security.SimpleEncryption;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -10,11 +12,14 @@ public class Speaker implements Runnable {
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
+    private final long key;
 
-    public Speaker(int portNum, String destAddress) {
+    private boolean encrypt = true;
+
+    public Speaker(int portNum, String destAddress, long key) {
         //  Set port number to argument
         this.port = portNum;
-
+        this.key = key;
         //  Try and setup client IP from argument
         try {
             destinationAddress = InetAddress.getByName(destAddress);
@@ -77,10 +82,11 @@ public class Speaker implements Runnable {
         //  Then process audio block with the VOIP layer (i.e. numbering)
 
         //  Then pass packet to SecurityLayer to encrypt/authenticate
+        byte[] encryptedAudio = SimpleEncryption.EncryptData(audioBlock, key);
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(audioBlock, audioBlock.length, destinationAddress, port);
+        DatagramPacket packet = new DatagramPacket(encrypt? encryptedAudio : audioBlock, audioBlock.length, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);

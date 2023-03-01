@@ -1,4 +1,5 @@
 import CMPC3M06.AudioPlayer;
+import Security.SimpleEncryption;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -9,8 +10,11 @@ public class Listener implements Runnable {
     private boolean running;
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
+    private final long key;
+    private boolean decrypt;
 
-    public Listener(int portNum) {
+    public Listener(int portNum, long key) {
+        this.key = key;
         port = portNum;
         //  Set up Receiving Socket
         try{
@@ -68,10 +72,11 @@ public class Listener implements Runnable {
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
         //  Then process decrypted audio packet with the VOIP layer
+        byte[] decryptedAudio = SimpleEncryption.DecryptData(buffer, key);
 
         //  Finally output the processed audio block to the speaker
         try {
-            player.playBlock(buffer);
+            player.playBlock(decrypt? decryptedAudio : buffer);
         } catch (IOException e) {
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();
