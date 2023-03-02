@@ -98,11 +98,11 @@ public class Listener implements Runnable {
             receivingSocket.receive(packet);
             // todo - send to security layer
             //todo - receive from voip layer
-            int packetNum = packetBuffer.getShort();
-            packetNums.add(packetNum); //todo - sort this
+            //int packetNum = packetBuffer.getShort();
+            //packetNums.add(packetNum); //todo - sort this
             //System.out.println("Packet Received: " + packetNum);
 
-            packetBuffer.get(audio);
+            //packetBuffer.get(audio);
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
         } catch (IOException e){
