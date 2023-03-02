@@ -3,71 +3,290 @@ package Security;
 import java.nio.ByteBuffer;
 
 public class SimpleEncryption {
-    private static int leftRotate(int n, int d) {
-        return (n << d) | (n >> (32 - d));
-    }
-    private static int rightRotate(int n, int d) {
-        return (n >> d) | (n << (32 - d));
-    }
 
-    public static byte[] EncryptData(byte[] plainText, long keyInput)
+    private static final int key[] = {
+            1, 0, 1, 0, 0, 0, 0, 0, 1, 0
+    }; // extra example for checking purpose
+
+
+    private static final int FKP[] = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 };
+    private static final int SKP[] = { 6, 3, 7, 4, 8, 5, 10, 9 };
+
+    private static int FirstKey[] = new int[8];
+    private static int SecondKey[] = new int[8];
+
+    private static final int[] InitialPermutation = { 2, 6, 3, 1, 4, 8, 5, 7 };
+    private static final int[] ExpansionPermutation = { 4, 1, 2, 3, 2, 3, 4, 1 };
+    private static final int[] StraightPermutation = { 2, 4, 3, 1 };
+    private static final int[] InverseInitialPermutation = { 4, 1, 3, 5, 7, 2, 8, 6 };
+    private static final int[][][] SubstitutionTable = {
+            {
+                { 1, 0, 3, 2 },
+                { 3, 2, 1, 0 },
+                { 0, 2, 1, 3 },
+                { 3, 1, 3, 2 }
+            },
+            {
+                { 0, 1, 2, 3 },
+                { 2, 0, 1, 3 },
+                { 3, 0, 1, 0 },
+                { 2, 1, 0, 3 }
+            }
+    };
+
+    //    this function basically generates the key(key1 and
+    //key2)     using P10 and P8 with (1 and 2)left shifts
+
+    //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
+    private static void key_generation()
     {
-        ByteBuffer encryptBuff = ByteBuffer.allocate(plainText.length);
-        ByteBuffer plaintext = ByteBuffer.wrap(plainText);
-        ByteBuffer keyBuff = ByteBuffer.allocate(8);
-        keyBuff.putLong(keyInput);
+        int tempKey[] = new int[10];
 
-        int firstKey = keyBuff.getInt(0);
-        int secondKey = keyBuff.getInt(4);
-        for (int i = 0; i < (plainText.length/4); i++)
-        {
-            int dataSeg = plaintext.getInt();
-            if(i % 2 == 0)
-            {
-                dataSeg = dataSeg ^ firstKey;
-                dataSeg = rightRotate(dataSeg, firstKey % 8);
-                dataSeg = dataSeg ^ leftRotate(firstKey, firstKey % 8);
-
-            }
-            else
-            {
-                dataSeg = dataSeg ^ secondKey;
-                dataSeg = leftRotate(dataSeg, firstKey % 8);
-                dataSeg = dataSeg ^ rightRotate(firstKey, firstKey % 8);
-
-            }
-            encryptBuff.putInt(dataSeg);
+        for (int i = 0; i < 10; i++) {
+            //  First we permute our 10 bit input key using FKP
+            tempKey[i] = key[FKP[i] - 1];
         }
-        return encryptBuff.array();
+
+        int left[] = new int[5];
+        int right[] = new int[5];
+
+        for (int i = 0; i < 5; i++) {
+            left[i] = tempKey[i];
+            right[i] = tempKey[i + 5];
+        }
+
+        int[] leftPrime = LeftShift(left, 1);
+        int[] rightPrime = LeftShift(right, 1);
+
+        for (int i = 0; i < 5; i++) {
+            tempKey[i] = leftPrime[i];
+            tempKey[i + 5] = rightPrime[i];
+        }
+
+        for (int i = 0; i < 8; i++) {
+            FirstKey[i] = tempKey[SKP[i] - 1];
+        }
+
+        leftPrime = LeftShift(left, 2);
+        rightPrime = LeftShift(right, 2);
+
+        for (int i = 0; i < 5; i++) {
+            tempKey[i] = leftPrime[i];
+            tempKey[i + 5] = rightPrime[i];
+        }
+        for (int i = 0; i < 8; i++) {
+            SecondKey[i] = tempKey[SKP[i] - 1];
+        }
     }
 
-    public static byte[] DecryptData(byte[] encryptedData, long keyInput)
-    {
-        ByteBuffer cipherText = ByteBuffer.wrap(encryptedData);
-        ByteBuffer decryptBuff = ByteBuffer.allocate(encryptedData.length);
-        ByteBuffer keyBuff = ByteBuffer.allocate(8);
-        keyBuff.putLong(keyInput);
 
-        int firstKey = keyBuff.getInt(0);
-        int secondKey = keyBuff.getInt(4);
-        for (int i = 0; i < (encryptedData.length/4); i++)
-        {
-            int dataSeg = cipherText.getInt();
-            if(i % 2 == 0)
-            {
-                dataSeg = dataSeg ^ rightRotate(firstKey, firstKey % 8);
-                dataSeg = leftRotate(dataSeg, firstKey % 8);
-                dataSeg = dataSeg ^ firstKey;
+    //  Simple left bit shift function taking an input and number of positions to shift
+
+    private static int[] LeftShift(int[] ar, int n)
+    {
+        while (n > 0) {
+            int temp = ar[0];
+            for (int i = 0; i < ar.length - 1; i++) {
+                ar[i] = ar[i + 1];
             }
-            else
-            {
-                dataSeg = dataSeg ^ leftRotate(firstKey, firstKey % 8);
-                dataSeg = rightRotate(dataSeg, firstKey % 8);
-                dataSeg = dataSeg ^ secondKey;
-            }
-            decryptBuff.putInt(dataSeg);
+            ar[ar.length - 1] = temp;
+            n--;
         }
-        return decryptBuff.array();
+        return ar;
+    }
+
+    // decimal to binary string 0-3
+    private static String binary_(int val)
+    {
+        if (val == 0)
+            return "00";
+        else if (val == 1)
+            return "01";
+        else if (val == 2)
+            return "10";
+        else
+            return "11";
+    }
+
+    //    this function is doing core things like expansion
+    //    then xor with desired key then S0 and S1
+    //substitution     P4 permutation and again xor     we have used
+    //this function 2 times(key-1 and key-2) during
+    //encryption and     2 times(key-2 and key-1) during
+    //decryption
+
+    private static int[] function_(int[] Input, int[] Key)
+    {
+        //  Separate our 8 bit input into two 4 bit halves
+        int[] left = new int[4];
+        int[] right = new int[4];
+
+        for (int i = 0; i < 4; i++) {
+            left[i] = Input[i];
+            right[i] = Input[i + 4];
+        }
+
+        //  Array for storing the result of our expansion permutation
+        int[] expansionResult = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            expansionResult[i] = right[ExpansionPermutation[i] - 1];
+        }
+
+        //  We XOR our key with our expansion result
+        for (int i = 0; i < 8; i++) {
+            Input[i] = Key[i] ^ expansionResult[i];
+        }
+
+
+        int[] leftPrime = new int[4];
+        int[] rightPrime = new int[4];
+
+        for (int i = 0; i < 4; i++) {
+            leftPrime[i] = Input[i];
+            rightPrime[i] = Input[i + 4];
+        }
+
+        int row, col, val;
+
+        row = Integer.parseInt("" + leftPrime[0] + leftPrime[3], 2);
+        col = Integer.parseInt("" + leftPrime[1] + leftPrime[2], 2);
+        val = SubstitutionTable[0][row][col];
+        String leftString = binary_(val);
+
+        row = Integer.parseInt("" + rightPrime[0] + rightPrime[3], 2);
+        col = Integer.parseInt("" + rightPrime[1] + rightPrime[2], 2);
+        val = SubstitutionTable[1][row][col];
+        String rightString = binary_(val);
+
+
+        rightPrime = new int[4];
+        for (int i = 0; i < 2; i++) {
+            char c1 = leftString.charAt(i);
+            char c2 = rightString.charAt(i);
+            rightPrime[i] = Character.getNumericValue(c1);
+            rightPrime[i + 2] = Character.getNumericValue(c2);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            rightPrime[i] = rightPrime[StraightPermutation[i] - 1];
+        }
+
+        for (int i = 0; i < 4; i++) {
+            left[i] = left[i] ^ rightPrime[i];
+        }
+
+        int[] output = new int[8];
+        for (int i = 0; i < 4; i++) {
+            output[i] = left[i];
+            output[i + 4] = right[i];
+        }
+        return output;
+    }
+
+    //    this function swaps the nibble of size n(4)
+    private static int[] swap(int[] array, int n)
+    {
+        int[] l = new int[n];
+        int[] r = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            l[i] = array[i];
+            r[i] = array[i + n];
+        }
+
+        int[] output = new int[2 * n];
+        for (int i = 0; i < n; i++) {
+            output[i] = r[i];
+            output[i + n] = l[i];
+        }
+
+        return output;
+    }
+
+    //  This function takes an array of 8 bits and encrypts them
+    public static int[] Encrypt(int[] plaintext)
+    {
+        int[] step1 = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            step1[i] = plaintext[InitialPermutation[i] - 1];
+        }
+
+        int[] step2 = function_(step1, FirstKey);
+
+        int[] step3 = swap(step2, step2.length / 2);
+
+        int[] step4 = function_(step3, SecondKey);
+
+        int[] ciphertext = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            ciphertext[i] = step4[InverseInitialPermutation[i] - 1];
+        }
+
+        return ciphertext;
+    }
+
+
+    //    this is main decryption function
+    //    here we have used all previously defined function
+    //    it takes cipher text as input and returns the array
+    //of     decrypted text
+
+    private static int[] Decrypt(int[] cipherText)
+    {
+        int[] step1 = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            step1[i] = cipherText[InitialPermutation[i] - 1];
+        }
+
+        int[] step2 = function_(step1, SecondKey);
+
+        int[] step3 = swap(step2, step2.length / 2);
+
+        int[] step4 = function_(step3, FirstKey);
+
+        int[] decrypted = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            decrypted[i] = step4[InverseInitialPermutation[i] - 1];
+        }
+        return decrypted;
+    }
+
+    public static void main(String[] args)
+    {
+
+        //  Generate keys
+        key_generation();
+
+        int[] plaintext = {
+                1, 0, 0, 1, 0, 1, 1, 1
+        };
+
+        System.out.println();
+        System.out.println("Your plain Text is :");
+        for (int i = 0; i < 8; i++)
+            System.out.print(plaintext[i] + " ");
+
+        int[] ciphertext = Encrypt(plaintext);
+
+        System.out.println();
+        System.out.println(
+                "Your cipher Text is :");
+        for (int i = 0; i < 8; i++)
+            System.out.print(ciphertext[i] + " ");
+
+        int[] decrypted = Decrypt(ciphertext);
+
+        System.out.println();
+        System.out.println(
+                "Your decrypted Text is :"); // printing the
+        // decrypted text
+        for (int i = 0; i < 8; i++)
+            System.out.print(decrypted[i] + " ");
     }
 
 }
