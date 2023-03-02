@@ -1,6 +1,9 @@
 import CMPC3M06.AudioPlayer;
 import Security.SecurityLayer;
 import Security.SimpleEncryption;
+import uk.ac.uea.cmp.voip.DatagramSocket2;
+import uk.ac.uea.cmp.voip.DatagramSocket3;
+import uk.ac.uea.cmp.voip.DatagramSocket4;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
@@ -18,14 +21,31 @@ public class Listener implements Runnable {
     private final SecurityLayer securityLayer;
     List<Integer> packetNums;
     
-    public Listener(int portNum, long key) {
+    public Listener(int portNum, long key, int socketNum) {
         port = portNum;
         packetNums = new ArrayList<>();
 
         //  Set up Receiving Socket
-        
         try{
-            this.receivingSocket = new DatagramSocket(port);
+            this.receivingSocket = new DatagramSocket();
+
+            // Set up Datagram Socket
+            switch(socketNum)
+            {
+                case 1 :
+                    this.receivingSocket = new DatagramSocket();
+                    break;
+                case 2 :
+                    this.receivingSocket = new DatagramSocket2();
+                    break;
+                case 3 :
+                    this.receivingSocket = new DatagramSocket3();
+                    break;
+                case 4 :
+                    this.receivingSocket = new DatagramSocket4();
+                    break;
+            }
+
             //TODO: Investigate what timeout we should have
             receivingSocket.setSoTimeout(1000);
         } catch (SocketException e){
