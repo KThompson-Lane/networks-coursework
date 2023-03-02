@@ -19,7 +19,6 @@ public class Speaker implements Runnable {
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
     private short packetCount;
-    private final SecurityLayer securityLayer;
 
     private final VoipLayer voipLayer;
     
@@ -74,9 +73,6 @@ public class Speaker implements Runnable {
 
         //  Set up VOIP layer
         voipLayer = new VoipLayer(key);
-
-        //  Set up security layer
-        securityLayer = new SecurityLayer(key, encrypt); //todo - move to voip
     }
 
     public void Start()
@@ -111,21 +107,6 @@ public class Speaker implements Runnable {
             return;
         }
 
-        // todo - move to voip
-        //  Then process audio block with the VOIP layer (i.e. numbering)
-        //ByteBuffer numberedPacket = ByteBuffer.allocate(514);
-        //packetCount++;
-        //short packetNum = packetCount;
-        //numberedPacket.putShort(packetNum);
-
-
-
-        //todo - move to voip
-        //  Then pass packet to SecurityLayer to encrypt/authenticate
-        //audioBlock = securityLayer.EncryptAndAuth(audioBlock);
-        //numberedPacket.put(audioBlock);
-
-        //todo - sort
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
 
