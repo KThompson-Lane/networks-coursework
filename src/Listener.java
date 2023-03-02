@@ -27,22 +27,22 @@ public class Listener implements Runnable {
 
         //  Set up Receiving Socket
         try{
-            this.receivingSocket = new DatagramSocket();
+            //this.receivingSocket = new DatagramSocket();
 
             // Set up Datagram Socket
             switch(socketNum)
             {
                 case 1 :
-                    this.receivingSocket = new DatagramSocket();
+                    this.receivingSocket = new DatagramSocket(port);
                     break;
                 case 2 :
-                    this.receivingSocket = new DatagramSocket2();
+                    this.receivingSocket = new DatagramSocket2(port);
                     break;
                 case 3 :
-                    this.receivingSocket = new DatagramSocket3();
+                    this.receivingSocket = new DatagramSocket3(port);
                     break;
                 case 4 :
-                    this.receivingSocket = new DatagramSocket4();
+                    this.receivingSocket = new DatagramSocket4(port);
                     break;
             }
 
