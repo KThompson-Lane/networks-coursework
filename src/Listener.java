@@ -18,8 +18,9 @@ public class Listener implements Runnable {
     private boolean running;
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
-    private final SecurityLayer securityLayer;
-    List<Integer> packetNums;
+    private final SecurityLayer securityLayer; //todo - move to voip
+    private final VoipLayer voipLayer;
+    List<Integer> packetNums; //todo - move to voip
     
     public Listener(int portNum, long key, int socketNum) {
         port = portNum;
@@ -42,6 +43,8 @@ public class Listener implements Runnable {
                 case 4 :
                     this.receivingSocket = new DatagramSocket4(port);
                     break;
+                default:
+                    //todo - error
             }
 
             //TODO: Investigate what timeout we should have
@@ -60,7 +63,8 @@ public class Listener implements Runnable {
             System.exit(0);
         }
         //  Set up security layer
-        securityLayer = new SecurityLayer(key, decrypt);
+        securityLayer = new SecurityLayer(key, decrypt); //todo - move to voip
+        voipLayer = new VoipLayer(key);
     }
     public void Start()
     {
@@ -92,6 +96,8 @@ public class Listener implements Runnable {
 
         try {
             receivingSocket.receive(packet);
+            // todo - send to security layer
+            //todo - receive from voip layer
             int packetNum = packetBuffer.getShort();
             packetNums.add(packetNum); //todo - sort this
             //System.out.println("Packet Received: " + packetNum);
@@ -106,7 +112,8 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-        audio = securityLayer.DecryptAndAuth(audio);
+        audio = voipLayer.receiveFromSecurity(packetBuffer);
+        audio = securityLayer.DecryptAndAuth(audio); //todo - move before voip
 
         //  Then process decrypted audio packet with the VOIP layer
 

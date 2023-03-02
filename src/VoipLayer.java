@@ -16,14 +16,22 @@
 import Security.SecurityLayer;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VoipLayer {
 
+    //For processing from audio layer
     private short packetCount = 0;
+
+    //For processing from transport layer
+    private List<Integer> packetNums;
 
     private final SecurityLayer securityLayer;
 
     public VoipLayer(long secretKey) {
+        packetNums = new ArrayList<>();
+
         securityLayer = new SecurityLayer(secretKey, true);
     }
 
@@ -35,7 +43,19 @@ public class VoipLayer {
 
         block = securityLayer.EncryptAndAuth(block);
         numberedPacket.put(block); //todo - don't think it should come back here after going to Security Layer
+
         return numberedPacket;
+    }
+
+    public byte[] receiveFromSecurity(ByteBuffer packetBuffer){
+        int packetNum = packetBuffer.getShort();
+        packetNums.add(packetNum); //todo - sort this
+        //System.out.println("Packet Received: " + packetNum);
+
+        byte[] audio = new byte[512];
+        packetBuffer.get(audio);
+
+        return audio;
     }
 
     public void number(){
