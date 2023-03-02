@@ -18,13 +18,11 @@ public class Listener implements Runnable {
     private boolean running;
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
-    private final SecurityLayer securityLayer; //todo - move to voip
-    private final VoipLayer voipLayer;
-    List<Integer> packetNums; //todo - move to voip
+    private final SecurityLayer securityLayer;
+    private final VoipLayer voipLayer; //todo - move to security
     
     public Listener(int portNum, long key, int socketNum) {
         port = portNum;
-        packetNums = new ArrayList<>();
 
         //  Set up Receiving Socket
         try{
@@ -63,8 +61,8 @@ public class Listener implements Runnable {
             System.exit(0);
         }
         //  Set up security layer
-        securityLayer = new SecurityLayer(key, decrypt); //todo - move to voip
-        voipLayer = new VoipLayer(key);
+        securityLayer = new SecurityLayer(key, decrypt);
+        voipLayer = new VoipLayer(key); //todo - move to security
     }
     public void Start()
     {
@@ -98,11 +96,6 @@ public class Listener implements Runnable {
             receivingSocket.receive(packet);
             // todo - send to security layer
             //todo - receive from voip layer
-            //int packetNum = packetBuffer.getShort();
-            //packetNums.add(packetNum); //todo - sort this
-            //System.out.println("Packet Received: " + packetNum);
-
-            //packetBuffer.get(audio);
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
         } catch (IOException e){

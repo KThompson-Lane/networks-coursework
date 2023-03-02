@@ -10,7 +10,6 @@
 //take in audio block
 //process
 //send to processed block security layer
-//package?
 
 
 import Security.SecurityLayer;
@@ -35,12 +34,14 @@ public class VoipLayer {
         securityLayer = new SecurityLayer(secretKey, true);
     }
 
-    public ByteBuffer process(byte[] block){
+    public ByteBuffer receiveFromAudio(byte[] block){
         ByteBuffer numberedPacket = ByteBuffer.allocate(514);
+        // Add numbered header
         packetCount++;
         short packetNum = packetCount;
         numberedPacket.putShort(packetNum);
 
+        // Send packet to Security Layer
         block = securityLayer.EncryptAndAuth(block);
         numberedPacket.put(block); //todo - don't think it should come back here after going to Security Layer
 
@@ -48,21 +49,16 @@ public class VoipLayer {
     }
 
     public byte[] receiveFromSecurity(ByteBuffer packetBuffer){
+        // Remove numbered header
         int packetNum = packetBuffer.getShort();
         packetNums.add(packetNum); //todo - sort this
         //System.out.println("Packet Received: " + packetNum);
 
+        // Send audio to Audio Layer
         byte[] audio = new byte[512];
         packetBuffer.get(audio);
 
         return audio;
-    }
-
-    public void number(){
-        ByteBuffer numberedPacket = ByteBuffer.allocate(514);
-        packetCount++;
-        short packetNum = packetCount;
-        numberedPacket.putShort(packetNum);
     }
 
     public void compensate(){}

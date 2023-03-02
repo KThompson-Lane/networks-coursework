@@ -111,7 +111,7 @@ public class Speaker implements Runnable {
         //  Make a DatagramPacket with client address and port number
 
         //todo - should be the security layer sending the packet to the transport layer
-        DatagramPacket packet = new DatagramPacket(voipLayer.process(audioBlock).array(), 514, destinationAddress, port);
+        DatagramPacket packet = new DatagramPacket(voipLayer.receiveFromAudio(audioBlock).array(), 514, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);
