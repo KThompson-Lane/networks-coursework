@@ -27,8 +27,6 @@ public class Listener implements Runnable {
 
         //  Set up Receiving Socket
         try{
-            //this.receivingSocket = new DatagramSocket();
-
             // Set up Datagram Socket
             switch(socketNum)
             {
