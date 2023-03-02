@@ -34,11 +34,8 @@ public class SimpleEncryption {
             }
     };
 
-    //    this function basically generates the key(key1 and
-    //key2)     using P10 and P8 with (1 and 2)left shifts
-
     //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
-    private static void key_generation()
+    public static void key_generation()
     {
         int tempKey[] = new int[10];
 
@@ -81,7 +78,6 @@ public class SimpleEncryption {
 
 
     //  Simple left bit shift function taking an input and number of positions to shift
-
     private static int[] LeftShift(int[] ar, int n)
     {
         while (n > 0) {
@@ -204,13 +200,13 @@ public class SimpleEncryption {
         return output;
     }
 
-    //  This function takes an array of 8 bits and encrypts them
-    public static int[] Encrypt(int[] plaintext)
+    //  This function takes an 8 bit segment and encrypts it
+    private static int[] Encrypt(int[] segment)
     {
         int[] step1 = new int[8];
 
         for (int i = 0; i < 8; i++) {
-            step1[i] = plaintext[InitialPermutation[i] - 1];
+            step1[i] = segment[InitialPermutation[i] - 1];
         }
 
         int[] step2 = function_(step1, FirstKey);
@@ -228,18 +224,13 @@ public class SimpleEncryption {
         return ciphertext;
     }
 
-
-    //    this is main decryption function
-    //    here we have used all previously defined function
-    //    it takes cipher text as input and returns the array
-    //of     decrypted text
-
-    private static int[] Decrypt(int[] cipherText)
+    //  This function takes an 8 bit segment and decrypts it
+    private static int[] Decrypt(int[] segment)
     {
         int[] step1 = new int[8];
 
         for (int i = 0; i < 8; i++) {
-            step1[i] = cipherText[InitialPermutation[i] - 1];
+            step1[i] = segment[InitialPermutation[i] - 1];
         }
 
         int[] step2 = function_(step1, SecondKey);
@@ -256,36 +247,80 @@ public class SimpleEncryption {
         return decrypted;
     }
 
+    public static byte[] EncryptData(byte[] plaintext)
+    {
+        ByteBuffer ToEncrypt = ByteBuffer.wrap(plaintext);
+        ByteBuffer EncryptedBuff = ByteBuffer.allocate(plaintext.length);
+        for (int i = 0; i < plaintext.length; i++) {
+            byte inputByte = ToEncrypt.get();
+            String bitString = String.format("%8s", Integer.toBinaryString(inputByte & 0xff)).replace(" ", "0");
+            int[] bits = new int[8];
+            for(int j = 0; j < 8; j++)
+            {
+                bits[j] = Character.getNumericValue(bitString.charAt(j));
+            }
+            int[] encryptedBits = Encrypt(bits);
+            StringBuilder str = new StringBuilder();
+            for (int j = 0; j < 8; j++)
+            {
+                str.append(encryptedBits[j]);
+            }
+            byte encryptedByte = (byte) Short.parseShort(str.toString(), 2);
+            EncryptedBuff.put(encryptedByte);
+        }
+        return EncryptedBuff.array();
+    }
+
+    public static byte[] DecryptData(byte[] cipherText)
+    {
+        ByteBuffer ToDecrypt = ByteBuffer.wrap(cipherText);
+        ByteBuffer DecryptedBuff = ByteBuffer.allocate(cipherText.length);
+        for (int i = 0; i < cipherText.length; i++) {
+            byte inputByte = ToDecrypt.get();
+            String bitString = String.format("%8s", Integer.toBinaryString(inputByte & 0xff)).replace(" ", "0");
+            int[] bits = new int[8];
+            for(int j = 0; j < 8; j++)
+            {
+                bits[j] = Character.getNumericValue(bitString.charAt(j));
+            }
+            int[] decryptedBits = Decrypt(bits);
+            StringBuilder str = new StringBuilder();
+            for (int j = 0; j < 8; j++)
+            {
+                str.append(decryptedBits[j]);
+            }
+            byte decryptedByte = (byte) Short.parseShort(str.toString(), 2);
+            DecryptedBuff.put(decryptedByte);
+        }
+        return DecryptedBuff.array();
+    }
+
     public static void main(String[] args)
     {
 
         //  Generate keys
         key_generation();
 
-        int[] plaintext = {
-                1, 0, 0, 1, 0, 1, 1, 1
-        };
+        byte[] plaintext = "Hello world!".getBytes();
 
         System.out.println();
         System.out.println("Your plain Text is :");
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < plaintext.length; i++)
             System.out.print(plaintext[i] + " ");
 
-        int[] ciphertext = Encrypt(plaintext);
+        byte[] ciphertext = EncryptData(plaintext);
 
         System.out.println();
-        System.out.println(
-                "Your cipher Text is :");
-        for (int i = 0; i < 8; i++)
+        System.out.println("Your cipher Text is :");
+        for (int i = 0; i < ciphertext.length; i++)
             System.out.print(ciphertext[i] + " ");
 
-        int[] decrypted = Decrypt(ciphertext);
-
+        byte[] decrypted = DecryptData(ciphertext);
         System.out.println();
         System.out.println(
                 "Your decrypted Text is :"); // printing the
         // decrypted text
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < decrypted.length; i++)
             System.out.print(decrypted[i] + " ");
     }
 

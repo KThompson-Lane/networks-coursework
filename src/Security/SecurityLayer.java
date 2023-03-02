@@ -22,7 +22,7 @@ public class SecurityLayer {
         byte[] securePacket = dataPacket;
         //  Encrypt
         if(enableEncryption)
-            securePacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+            securePacket = SimpleEncryption.EncryptData(dataPacket);
         //  Authenticate
         securePacket = authenticator.SignPacket(securePacket);
         //  Return secure packet
@@ -40,13 +40,14 @@ public class SecurityLayer {
         byte[] dataPacket = new byte[512];
         EncryptedPacketBuff.get(4, dataPacket);
         if(enableEncryption)
-            dataPacket = SimpleEncryption.DecryptData(dataPacket, secretKey);
+            dataPacket = SimpleEncryption.DecryptData(dataPacket);
         //  Return decrypted data packet
         return dataPacket;
     }
 
     //Methods for testing the security layer functionality
     public static void main(String[] args) {
+        SimpleEncryption.key_generation();
         TestNumber();
         TestAudio();
     }
@@ -60,10 +61,10 @@ public class SecurityLayer {
         ByteBuffer outputBuff = ByteBuffer.allocate(64);
         
         inputBuff.putLong(input);
-        byte[] cipherText = SimpleEncryption.EncryptData(inputBuff.array(), key);
+        byte[] cipherText = SimpleEncryption.EncryptData(inputBuff.array());
         cipherBuff.put(cipherText);
         long cipherInput = cipherBuff.getLong(0);
-        byte[] plainText = SimpleEncryption.DecryptData(cipherText, key);
+        byte[] plainText = SimpleEncryption.DecryptData(cipherText);
         outputBuff.put(plainText);
         long decryptOutput = outputBuff.getLong(0);
 
@@ -93,9 +94,9 @@ public class SecurityLayer {
         {
             try {
                 byte[] block = recorder.getBlock();
-                block = SimpleEncryption.EncryptData(block, key);
+                block = SimpleEncryption.EncryptData(block);
                 if(decrypt)
-                    block = SimpleEncryption.DecryptData(block, key);
+                    block = SimpleEncryption.DecryptData(block);
                 player.playBlock(block);
             } catch (IOException e) {
                 throw new RuntimeException(e);
