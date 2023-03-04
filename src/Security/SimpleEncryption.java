@@ -4,16 +4,11 @@ import java.nio.ByteBuffer;
 
 public class SimpleEncryption {
 
-    private static final int key[] = {
-            1, 0, 1, 0, 0, 0, 0, 0, 1, 0
-    }; // extra example for checking purpose
+    private static final int[] FKP = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 };
+    private static final int[] SKP = { 6, 3, 7, 4, 8, 5, 10, 9 };
 
-
-    private static final int FKP[] = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 };
-    private static final int SKP[] = { 6, 3, 7, 4, 8, 5, 10, 9 };
-
-    private static int FirstKey[] = new int[8];
-    private static int SecondKey[] = new int[8];
+    private static String FirstKey;
+    private static String SecondKey;
 
     private static final int[] InitialPermutation = { 2, 6, 3, 1, 4, 8, 5, 7 };
     private static final int[] ExpansionPermutation = { 4, 1, 2, 3, 2, 3, 4, 1 };
@@ -34,65 +29,42 @@ public class SimpleEncryption {
             }
     };
 
-    //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
-    public static void key_generation()
-    {
-        int tempKey[] = new int[10];
-
-        for (int i = 0; i < 10; i++) {
-            //  First we permute our 10 bit input key using FKP
-            tempKey[i] = key[FKP[i] - 1];
-        }
-
-        int left[] = new int[5];
-        int right[] = new int[5];
-
-        for (int i = 0; i < 5; i++) {
-            left[i] = tempKey[i];
-            right[i] = tempKey[i + 5];
-        }
-
-        int[] leftPrime = LeftShift(left, 1);
-        int[] rightPrime = LeftShift(right, 1);
-
-        for (int i = 0; i < 5; i++) {
-            tempKey[i] = leftPrime[i];
-            tempKey[i + 5] = rightPrime[i];
-        }
-
-        for (int i = 0; i < 8; i++) {
-            FirstKey[i] = tempKey[SKP[i] - 1];
-        }
-
-        leftPrime = LeftShift(left, 2);
-        rightPrime = LeftShift(right, 2);
-
-        for (int i = 0; i < 5; i++) {
-            tempKey[i] = leftPrime[i];
-            tempKey[i + 5] = rightPrime[i];
-        }
-        for (int i = 0; i < 8; i++) {
-            SecondKey[i] = tempKey[SKP[i] - 1];
-        }
-    }
-
-
     //  Simple left bit shift function taking an input and number of positions to shift
-    private static int[] LeftShift(int[] ar, int n)
+    private static String LeftShift(final String input, final int n)
     {
-        while (n > 0) {
-            int temp = ar[0];
-            for (int i = 0; i < ar.length - 1; i++) {
-                ar[i] = ar[i + 1];
-            }
-            ar[ar.length - 1] = temp;
-            n--;
-        }
-        return ar;
+        final int length = input.length();
+        if (length == 0) return "";
+        final int offset = ((n % length) + length) % length;
+
+        return input.substring(offset, length) + input.substring(0, offset);
     }
 
-    // decimal to binary string 0-3
-    private static String binary_(int val)
+    //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
+    public static void GenerateKeys(String input)
+    {
+        String key;
+
+        //  First we permute our 10 bit input key using FKP
+        String masterKey = Permutate(input, FKP);
+
+        //  We then begin building our key by left shifting each half by one
+        key = LeftShift(masterKey.substring(0,5), 1) + LeftShift(masterKey.substring(5), 1);
+
+        //  Our first key is given by permuting using the SKP
+        FirstKey = Permutate(key, SKP);
+        System.out.println("First key is: " + FirstKey);
+
+        //  We then left shift our key again by 2
+        key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
+
+        //  Our second key is again given by permuting using the SKP
+        SecondKey = Permutate(key, SKP);
+        System.out.println("Second key is: " + SecondKey);
+
+    }
+
+    // Convert 2 bit number to binary string
+    private static String ToBinary(int val)
     {
         if (val == 0)
             return "00";
@@ -104,147 +76,102 @@ public class SimpleEncryption {
             return "11";
     }
 
-    //    this function is doing core things like expansion
-    //    then xor with desired key then S0 and S1
-    //substitution     P4 permutation and again xor     we have used
-    //this function 2 times(key-1 and key-2) during
-    //encryption and     2 times(key-2 and key-1) during
-    //decryption
-
-    private static int[] function_(int[] Input, int[] Key)
+    // Helper function for XOR'ing two binary strings and returning a padded 8 bit binary string
+    private static String XOR(String fst, String snd, int padding)
     {
-        //  Separate our 8 bit input into two 4 bit halves
-        int[] left = new int[4];
-        int[] right = new int[4];
-
-        for (int i = 0; i < 4; i++) {
-            left[i] = Input[i];
-            right[i] = Input[i + 4];
+        int first = Integer.parseInt(fst,2);
+        int second = Integer.parseInt(snd,2);
+        StringBuilder binaryOutput = new StringBuilder(Integer.toBinaryString(first ^ second));
+        while (binaryOutput.length() < padding) {
+            binaryOutput.insert(0, "0");
         }
-
-        //  Array for storing the result of our expansion permutation
-        int[] expansionResult = new int[8];
-
-        for (int i = 0; i < 8; i++) {
-            expansionResult[i] = right[ExpansionPermutation[i] - 1];
-        }
-
-        //  We XOR our key with our expansion result
-        for (int i = 0; i < 8; i++) {
-            Input[i] = Key[i] ^ expansionResult[i];
-        }
-
-
-        int[] leftPrime = new int[4];
-        int[] rightPrime = new int[4];
-
-        for (int i = 0; i < 4; i++) {
-            leftPrime[i] = Input[i];
-            rightPrime[i] = Input[i + 4];
-        }
-
-        int row, col, val;
-
-        row = Integer.parseInt("" + leftPrime[0] + leftPrime[3], 2);
-        col = Integer.parseInt("" + leftPrime[1] + leftPrime[2], 2);
-        val = SubstitutionTable[0][row][col];
-        String leftString = binary_(val);
-
-        row = Integer.parseInt("" + rightPrime[0] + rightPrime[3], 2);
-        col = Integer.parseInt("" + rightPrime[1] + rightPrime[2], 2);
-        val = SubstitutionTable[1][row][col];
-        String rightString = binary_(val);
-
-
-        rightPrime = new int[4];
-        for (int i = 0; i < 2; i++) {
-            char c1 = leftString.charAt(i);
-            char c2 = rightString.charAt(i);
-            rightPrime[i] = Character.getNumericValue(c1);
-            rightPrime[i + 2] = Character.getNumericValue(c2);
-        }
-
-        for (int i = 0; i < 4; i++) {
-            rightPrime[i] = rightPrime[StraightPermutation[i] - 1];
-        }
-
-        for (int i = 0; i < 4; i++) {
-            left[i] = left[i] ^ rightPrime[i];
-        }
-
-        int[] output = new int[8];
-        for (int i = 0; i < 4; i++) {
-            output[i] = left[i];
-            output[i + 4] = right[i];
-        }
-        return output;
+        return binaryOutput.toString();
     }
 
-    //    this function swaps the nibble of size n(4)
-    private static int[] swap(int[] array, int n)
+    //  A function which permutes an input using a given permutation table
+    private static String Permutate(final String input, final int[] table)
     {
-        int[] l = new int[n];
-        int[] r = new int[n];
-
-        for (int i = 0; i < n; i++) {
-            l[i] = array[i];
-            r[i] = array[i + n];
+        StringBuilder output = new StringBuilder();
+        for (int index : table) {
+            output.append(input.charAt(index - 1));
         }
+        return output.toString();
+    }
 
-        int[] output = new int[2 * n];
-        for (int i = 0; i < n; i++) {
-            output[i] = r[i];
-            output[i + n] = l[i];
-        }
+    //  A function which performs a round on the input data
+    private static String Round(final String Input, final String Key)
+    {
+        //  Separate our 8 bit input string into two 4 bit halves
+        String left = Input.substring(0,4);
+        String right = Input.substring(4,8);
 
-        return output;
+        //  String builder for storing the result of our EP
+        String expansionResult = Permutate(right, ExpansionPermutation);
+
+
+        //  We XOR our key with our expansion result
+        String xorResult = XOR(Key, expansionResult, 8);
+
+        //  Splitting our XOR result into left and right halves
+        String leftPrime, rightPrime;
+        leftPrime = xorResult.substring(0,4);
+        rightPrime = xorResult.substring(4,8);
+
+
+        //  We substitute the left and right halves using our substitution tables to permute rightPrime
+        int row, col, Sub1, Sub2;
+        row = Integer.parseInt("" + leftPrime.charAt(0) + leftPrime.charAt(3), 2);
+        col = Integer.parseInt("" + leftPrime.charAt(1) + leftPrime.charAt(2), 2);
+        Sub1 = SubstitutionTable[0][row][col];
+
+        row = Integer.parseInt("" + rightPrime.charAt(0) + rightPrime.charAt(3), 2);
+        col = Integer.parseInt("" + rightPrime.charAt(1) + rightPrime.charAt(2), 2);
+        Sub2 = SubstitutionTable[1][row][col];
+
+        rightPrime = ToBinary(Sub1) + ToBinary(Sub2);
+
+        String pResult = Permutate(rightPrime, StraightPermutation);
+
+        left = XOR(left, pResult, 4);
+        return left + right;
     }
 
     //  This function takes an 8 bit segment and encrypts it
-    private static int[] Encrypt(int[] segment)
+    private static String Encrypt(final String segment)
     {
-        int[] step1 = new int[8];
+        //  Initial permutation
+        String data = Permutate(segment, InitialPermutation);
 
-        for (int i = 0; i < 8; i++) {
-            step1[i] = segment[InitialPermutation[i] - 1];
-        }
+        //  First key round
+        data = Round(data, FirstKey);
 
-        int[] step2 = function_(step1, FirstKey);
+        //  Swapping left and right halves
+        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
 
-        int[] step3 = swap(step2, step2.length / 2);
+        //  Second key round
+        data = Round(data, SecondKey);
 
-        int[] step4 = function_(step3, SecondKey);
-
-        int[] ciphertext = new int[8];
-
-        for (int i = 0; i < 8; i++) {
-            ciphertext[i] = step4[InverseInitialPermutation[i] - 1];
-        }
-
-        return ciphertext;
+        //  Inverse initial permutation
+        return Permutate(data, InverseInitialPermutation);
     }
 
     //  This function takes an 8 bit segment and decrypts it
-    private static int[] Decrypt(int[] segment)
+    private static String Decrypt(final String segment)
     {
-        int[] step1 = new int[8];
+        //  Initial permutation
+        String data = Permutate(segment, InitialPermutation);
 
-        for (int i = 0; i < 8; i++) {
-            step1[i] = segment[InitialPermutation[i] - 1];
-        }
+        //  Second key round
+        data = Round(data, SecondKey);
 
-        int[] step2 = function_(step1, SecondKey);
+        //  Swapping left and right halves
+        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
 
-        int[] step3 = swap(step2, step2.length / 2);
+        //  First key round
+        data = Round(data, FirstKey);
 
-        int[] step4 = function_(step3, FirstKey);
-
-        int[] decrypted = new int[8];
-
-        for (int i = 0; i < 8; i++) {
-            decrypted[i] = step4[InverseInitialPermutation[i] - 1];
-        }
-        return decrypted;
+        //  Inverse initial permutation
+        return Permutate(data, InverseInitialPermutation);
     }
 
     public static byte[] EncryptData(byte[] plaintext)
@@ -254,18 +181,8 @@ public class SimpleEncryption {
         for (int i = 0; i < plaintext.length; i++) {
             byte inputByte = ToEncrypt.get();
             String bitString = String.format("%8s", Integer.toBinaryString(inputByte & 0xff)).replace(" ", "0");
-            int[] bits = new int[8];
-            for(int j = 0; j < 8; j++)
-            {
-                bits[j] = Character.getNumericValue(bitString.charAt(j));
-            }
-            int[] encryptedBits = Encrypt(bits);
-            StringBuilder str = new StringBuilder();
-            for (int j = 0; j < 8; j++)
-            {
-                str.append(encryptedBits[j]);
-            }
-            byte encryptedByte = (byte) Short.parseShort(str.toString(), 2);
+            String encryptedbitString = Encrypt(bitString);
+            byte encryptedByte = (byte) Short.parseShort(encryptedbitString, 2);
             EncryptedBuff.put(encryptedByte);
         }
         return EncryptedBuff.array();
@@ -278,18 +195,8 @@ public class SimpleEncryption {
         for (int i = 0; i < cipherText.length; i++) {
             byte inputByte = ToDecrypt.get();
             String bitString = String.format("%8s", Integer.toBinaryString(inputByte & 0xff)).replace(" ", "0");
-            int[] bits = new int[8];
-            for(int j = 0; j < 8; j++)
-            {
-                bits[j] = Character.getNumericValue(bitString.charAt(j));
-            }
-            int[] decryptedBits = Decrypt(bits);
-            StringBuilder str = new StringBuilder();
-            for (int j = 0; j < 8; j++)
-            {
-                str.append(decryptedBits[j]);
-            }
-            byte decryptedByte = (byte) Short.parseShort(str.toString(), 2);
+            String decryptedBitString = Decrypt(bitString);
+            byte decryptedByte = (byte) Short.parseShort(decryptedBitString, 2);
             DecryptedBuff.put(decryptedByte);
         }
         return DecryptedBuff.array();
@@ -297,9 +204,8 @@ public class SimpleEncryption {
 
     public static void main(String[] args)
     {
-
         //  Generate keys
-        key_generation();
+        GenerateKeys("1010000010");
 
         byte[] plaintext = "Hello world!".getBytes();
 

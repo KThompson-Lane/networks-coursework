@@ -47,7 +47,7 @@ public class SecurityLayer {
 
     //Methods for testing the security layer functionality
     public static void main(String[] args) {
-        SimpleEncryption.key_generation();
+        SimpleEncryption.GenerateKeys("1110111011");
         TestNumber();
         TestAudio();
     }
