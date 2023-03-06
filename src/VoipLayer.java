@@ -9,26 +9,28 @@ import java.util.List;
 
 public class VoipLayer {
 
-    //For processing from audio layer
-    private short packetCount = 0; //todo - explain
     private AudioRecorder recorder;
     private AudioPlayer player;
 
-    //For processing from transport layer
+    //For processing from audio layer
+    private short packetCount = 0; //counts number of packets to send so that they can be sequenced
+
+    private int sentPackets = 0; //counts number of packets to be interleaved
+
+
+    //For processing from security layer
     private List<Integer> packetNums;
+    private int receivedPackets = 0; //counts number of packets to be de-interleaved
 
-    //For interleaving
+
+    //For interleaving/de-interleaving
     private ByteBuffer[] packetBlock;
-    ByteBuffer[] interleavedPackets = new ByteBuffer[9];
-    ByteBuffer[] unInterleavedPackets = new ByteBuffer[9];
-    int countRow = 0;
-    int countColumn = 0;
+    private ByteBuffer[] interleavedPackets = new ByteBuffer[9];
+    private ByteBuffer[] unInterleavedPackets = new ByteBuffer[9];
+    private int countRow = 0;
+    private int countColumn = 0;
 
-    private int count = 0; //todo - explain
-
-    int sentPackets = 0; //todo - explain
-    int receivedPackets = 0;
-
+    private int count = 0; //Keeps track of which packets have been interleaved/de-interleaved
 
     public VoipLayer() {
         packetNums = new ArrayList<>();
@@ -81,7 +83,7 @@ public class VoipLayer {
         }
     }
 
-    public void receiveFromSecurity(byte[] bytes) { //todo - make void
+    public void receiveFromSecurity(byte[] bytes) {
         ByteBuffer packetBuffer = ByteBuffer.wrap(bytes);
         if(receivedPackets < 9) {
             interleavedPackets[receivedPackets] = packetBuffer;
@@ -134,40 +136,10 @@ public class VoipLayer {
 
         for (int i = 0; i < 18; i++) {
             //TEST - Ensure unInterleaver working correctly
-            //ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
             test.receiveFromSecurity(test.getVoipBlock());
         }
     }
 
-
-    public ByteBuffer interleave(ByteBuffer packets, int blockSize) { //todo - REMOVE
-        // packets loaded into d * d blocks e.g 3 * 3 for 9 packets
-
-        //Add to block as long as it isn't full
-        byte[][] block = new byte[blockSize][blockSize];
-        for (int i = 0; i < blockSize; i++) {
-            for (int j = 0; j < blockSize; j++) {
-                block[i][j] = packets.get();
-                countRow++;
-            }
-            countColumn++;
-        }
-
-        byte[][] rotatedBlock = new byte[blockSize][blockSize];
-        for (int i = 0; i < blockSize - 1; i++) {
-            for (int j = 0; j < blockSize; j++) {
-                rotatedBlock[blockSize - 1 - j][i] = block[i][j];
-            }
-        }
-
-        ByteBuffer interleavedPackets = ByteBuffer.allocate(blockSize * blockSize);
-        for (int i = 0; i < blockSize; i++) {
-            for (int j = 0; j < blockSize; j++) {
-                interleavedPackets.put(rotatedBlock[i][j]);
-            }
-        }
-        return interleavedPackets;
-    }
 
     //todo - find a way to do all of this with less loops!!!!
     public ByteBuffer[] interleave(ByteBuffer[] packets, int blockSize) {
@@ -179,9 +151,7 @@ public class VoipLayer {
             for (int j = 0; j < blockSize; j++) {
                 block[i][j] = packets[count];
                 count++;
-                countRow++;
             }
-            countColumn++;
         }
 
         ByteBuffer[][] rotatedBlock = new ByteBuffer[blockSize][blockSize];
@@ -192,11 +162,11 @@ public class VoipLayer {
         }
 
         ByteBuffer[] interleavedPackets = new ByteBuffer[9];
-        int count2 = 0; //todo - change
+        count = 0;
         for (int i = 0; i < blockSize; i++) {
             for (int j = 0; j < blockSize; j++) {
-                interleavedPackets[count2] = rotatedBlock[i][j];
-                count2++;
+                interleavedPackets[count] = rotatedBlock[i][j];
+                count++;
             }
         }
         return interleavedPackets;
@@ -211,9 +181,7 @@ public class VoipLayer {
             for (int j = 0; j < blockSize; j++) {
                 block[i][j] = packets[count];
                 count++;
-                countRow++;
             }
-            countColumn++;
         }
 
         ByteBuffer[][] rotatedBlock = new ByteBuffer[blockSize][blockSize];
@@ -224,11 +192,11 @@ public class VoipLayer {
         }
 
         ByteBuffer[] unInterleavedPackets = new ByteBuffer[9];
-        int count2 = 0; //todo - change
+        count = 0;
         for (int i = 0; i < blockSize; i++) {
             for (int j = 0; j < blockSize; j++) {
-                unInterleavedPackets[count2] = rotatedBlock[i][j];
-                count2++;
+                unInterleavedPackets[count] = rotatedBlock[i][j];
+                count++;
             }
         }
         return unInterleavedPackets;
