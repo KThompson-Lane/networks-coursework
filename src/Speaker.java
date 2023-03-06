@@ -72,7 +72,7 @@ public class Speaker implements Runnable {
         }
 
         //  Set up VOIP layer
-        voipLayer = new VoipLayer(key);
+        voipLayer = new VoipLayer();
     }
 
     public void Start()
@@ -110,8 +110,20 @@ public class Speaker implements Runnable {
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
 
-        //todo - should be the security layer sending the packet to the transport layer
-        DatagramPacket packet = new DatagramPacket(voipLayer.receiveFromAudio(audioBlock).array(), 514, destinationAddress, port);
+        // VOIP LAYER
+        //DatagramPacket packet = new DatagramPacket(voipLayer.receiveFromAudio(audioBlock).array(), 514, destinationAddress, port);
+
+        voipLayer.receiveFromAudio(); //todo - rename
+
+
+        DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
+
+        //wait for packets to be processed
+
+
+        // SECURITY LAYER HERE
+
+
         //Send it
         try {
             sendingSocket.send(packet);

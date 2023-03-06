@@ -62,7 +62,7 @@ public class Listener implements Runnable {
         }
         //  Set up security layer
         securityLayer = new SecurityLayer(key, decrypt);
-        voipLayer = new VoipLayer(key); //todo - move to security
+        voipLayer = new VoipLayer(); //todo - move to security
     }
     public void Start()
     {
