@@ -8,13 +8,12 @@ import CMPC3M06.AudioRecorder;
 import javax.sound.sampled.LineUnavailableException;
 
 public class SecurityLayer {
-    private final long secretKey;
     private final Authenticator authenticator;
     private final boolean enableEncryption;
     public SecurityLayer(long secretKey, boolean enableEncryption) {
-        this.secretKey = secretKey;
         this.enableEncryption = enableEncryption;
         authenticator = new Authenticator(Long.hashCode(secretKey));
+        SimpleEncryption.GenerateKeys(secretKey);
     }
 
     public byte[] EncryptAndSign(byte[] dataPacket)
@@ -47,7 +46,7 @@ public class SecurityLayer {
 
     //Methods for testing the security layer functionality
     public static void main(String[] args) {
-        SimpleEncryption.GenerateKeys("1110111011");
+        SimpleEncryption.GenerateKeys(832139);
         TestNumber();
         TestAudio();
     }
@@ -78,7 +77,7 @@ public class SecurityLayer {
         long key = 832139;
         long input = 123456789;
 
-        boolean decrypt = false;
+        boolean decrypt = true;
         AudioRecorder recorder = null;
         AudioPlayer player = null;
         try{

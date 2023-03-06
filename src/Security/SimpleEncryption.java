@@ -34,14 +34,15 @@ public class SimpleEncryption {
     {
         final int length = input.length();
         if (length == 0) return "";
-        final int offset = ((n % length) + length) % length;
+        final int shift = (n % length);
 
-        return input.substring(offset, length) + input.substring(0, offset);
+        return input.substring(shift, length) + input.substring(0, shift);
     }
 
     //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
-    public static void GenerateKeys(String input)
+    public static void GenerateKeys(long inputKey)
     {
+        String input = new StringBuilder(Long.toBinaryString(inputKey)).substring(0,10);
         String key;
 
         //  First we permute our 10 bit input key using FKP
@@ -205,7 +206,7 @@ public class SimpleEncryption {
     public static void main(String[] args)
     {
         //  Generate keys
-        GenerateKeys("1010000010");
+        GenerateKeys(832139);
 
         byte[] plaintext = "Hello world!".getBytes();
 
