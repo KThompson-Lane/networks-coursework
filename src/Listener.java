@@ -67,10 +67,10 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        ByteBuffer packetBuffer = ByteBuffer.allocate(516);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 516);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(518);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 518);
 
-        byte[] audio = new byte[514];
+        byte[] audio = new byte[516];
 
         try {
             receivingSocket.receive(packet);
@@ -88,7 +88,7 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-        byte[] test = new byte[512];
+        byte[] test;
         try{
             test = securityLayer.AuthAndDecrypt(audio);
         }catch (UnableToAuthenticateException e)
