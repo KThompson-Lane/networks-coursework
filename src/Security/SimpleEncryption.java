@@ -1,6 +1,7 @@
 package Security;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class SimpleEncryption {
 
@@ -39,58 +40,51 @@ public class SimpleEncryption {
         return input.substring(shift, length) + input.substring(0, shift);
     }
 
-    //  Using FKP and SKP we generate key 1 and key 2 using bit shifts
-    public static void GenerateKeys(long inputKey)
+    //  Generate keys using permutation tables FKP and SKP and bit-shifts
+    public static void GenerateKeys(final long inputKey)
     {
+        //  Take our master key and use the first 10 bits to generate our keys
         String input = new StringBuilder(Long.toBinaryString(inputKey)).substring(0,10);
         String key;
 
         //  First we permute our 10 bit input key using FKP
-        String masterKey = Permutate(input, FKP);
+        String masterKey = Permute(input, FKP);
 
         //  We then begin building our key by left shifting each half by one
         key = LeftShift(masterKey.substring(0,5), 1) + LeftShift(masterKey.substring(5), 1);
 
         //  Our first key is given by permuting using the SKP
-        FirstKey = Permutate(key, SKP);
-        System.out.println("First key is: " + FirstKey);
+        FirstKey = Permute(key, SKP);
 
         //  We then left shift our key again by 2
         key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
 
         //  Our second key is again given by permuting using the SKP
-        SecondKey = Permutate(key, SKP);
-        System.out.println("Second key is: " + SecondKey);
-
+        SecondKey = Permute(key, SKP);
     }
 
-    // Convert 2 bit number to binary string
-    private static String ToBinary(int val)
+    //  Helper function that converts an integer to a padded binary string
+    private static String ToPaddedBinaryString(final int value, final int padding)
     {
-        if (val == 0)
-            return "00";
-        else if (val == 1)
-            return "01";
-        else if (val == 2)
-            return "10";
-        else
-            return "11";
+        StringBuilder output = new StringBuilder(Integer.toBinaryString(value));
+
+        //  Prepend zeroes until we reach sufficient padding
+        while (output.length() < padding) {
+            output.insert(0, "0");
+        }
+        return output.toString();
     }
 
-    // Helper function for XOR'ing two binary strings and returning a padded 8 bit binary string
-    private static String XOR(String fst, String snd, int padding)
+    //  Helper function for XOR'ing two binary strings
+    private static String XOR(final String fst, final String snd)
     {
         int first = Integer.parseInt(fst,2);
         int second = Integer.parseInt(snd,2);
-        StringBuilder binaryOutput = new StringBuilder(Integer.toBinaryString(first ^ second));
-        while (binaryOutput.length() < padding) {
-            binaryOutput.insert(0, "0");
-        }
-        return binaryOutput.toString();
+        return ToPaddedBinaryString(first ^ second, fst.length());
     }
 
     //  A function which permutes an input using a given permutation table
-    private static String Permutate(final String input, final int[] table)
+    private static String Permute(final String input, final int[] table)
     {
         StringBuilder output = new StringBuilder();
         for (int index : table) {
@@ -99,25 +93,23 @@ public class SimpleEncryption {
         return output.toString();
     }
 
-    //  A function which performs a round on the input data
+    //  A function which performs a round on the input data using a given 8-bit key
     private static String Round(final String Input, final String Key)
     {
         //  Separate our 8 bit input string into two 4 bit halves
         String left = Input.substring(0,4);
         String right = Input.substring(4,8);
 
-        //  String builder for storing the result of our EP
-        String expansionResult = Permutate(right, ExpansionPermutation);
-
+        //  String for storing the result of our Expansion permutation
+        String expansionResult = Permute(right, ExpansionPermutation);
 
         //  We XOR our key with our expansion result
-        String xorResult = XOR(Key, expansionResult, 8);
+        String xorResult = XOR(Key, expansionResult);
 
         //  Splitting our XOR result into left and right halves
         String leftPrime, rightPrime;
         leftPrime = xorResult.substring(0,4);
         rightPrime = xorResult.substring(4,8);
-
 
         //  We substitute the left and right halves using our substitution tables to permute rightPrime
         int row, col, Sub1, Sub2;
@@ -129,11 +121,14 @@ public class SimpleEncryption {
         col = Integer.parseInt("" + rightPrime.charAt(1) + rightPrime.charAt(2), 2);
         Sub2 = SubstitutionTable[1][row][col];
 
-        rightPrime = ToBinary(Sub1) + ToBinary(Sub2);
+        rightPrime = ToPaddedBinaryString(Sub1, 2) + ToPaddedBinaryString(Sub2, 2);
 
-        String pResult = Permutate(rightPrime, StraightPermutation);
+        String pResult = Permute(rightPrime, StraightPermutation);
 
-        left = XOR(left, pResult, 4);
+        //  The left half is then XOR'ed with the permuted rightPrime
+        left = XOR(left, pResult);
+
+        //  We then recombine the halves and return the result
         return left + right;
     }
 
@@ -141,7 +136,7 @@ public class SimpleEncryption {
     private static String Encrypt(final String segment)
     {
         //  Initial permutation
-        String data = Permutate(segment, InitialPermutation);
+        String data = Permute(segment, InitialPermutation);
 
         //  First key round
         data = Round(data, FirstKey);
@@ -153,14 +148,14 @@ public class SimpleEncryption {
         data = Round(data, SecondKey);
 
         //  Inverse initial permutation
-        return Permutate(data, InverseInitialPermutation);
+        return Permute(data, InverseInitialPermutation);
     }
 
     //  This function takes an 8 bit segment and decrypts it
     private static String Decrypt(final String segment)
     {
         //  Initial permutation
-        String data = Permutate(segment, InitialPermutation);
+        String data = Permute(segment, InitialPermutation);
 
         //  Second key round
         data = Round(data, SecondKey);
@@ -172,9 +167,10 @@ public class SimpleEncryption {
         data = Round(data, FirstKey);
 
         //  Inverse initial permutation
-        return Permutate(data, InverseInitialPermutation);
+        return Permute(data, InverseInitialPermutation);
     }
 
+    //  Encrypts the plaintext one byte at a time using our simple block cipher
     public static byte[] EncryptData(byte[] plaintext)
     {
         ByteBuffer ToEncrypt = ByteBuffer.wrap(plaintext);
@@ -189,6 +185,7 @@ public class SimpleEncryption {
         return EncryptedBuff.array();
     }
 
+    //  Decrypts the ciphertext one byte at a time using our simple block cipher
     public static byte[] DecryptData(byte[] cipherText)
     {
         ByteBuffer ToDecrypt = ByteBuffer.wrap(cipherText);
@@ -208,27 +205,16 @@ public class SimpleEncryption {
         //  Generate keys
         GenerateKeys(832139);
 
-        byte[] plaintext = "Hello world!".getBytes();
+        byte[] plaintext = "Hello World!".getBytes();
 
-        System.out.println();
-        System.out.println("Your plain Text is :");
-        for (int i = 0; i < plaintext.length; i++)
-            System.out.print(plaintext[i] + " ");
+        System.out.println("Your plain Text is : \n" + Arrays.toString(plaintext));
 
         byte[] ciphertext = EncryptData(plaintext);
+        System.out.println("\nYour cipher Text is : \n" + Arrays.toString(ciphertext));
 
-        System.out.println();
-        System.out.println("Your cipher Text is :");
-        for (int i = 0; i < ciphertext.length; i++)
-            System.out.print(ciphertext[i] + " ");
 
         byte[] decrypted = DecryptData(ciphertext);
-        System.out.println();
-        System.out.println(
-                "Your decrypted Text is :"); // printing the
-        // decrypted text
-        for (int i = 0; i < decrypted.length; i++)
-            System.out.print(decrypted[i] + " ");
+        System.out.println("\nYour decrypted Text is : \n" + Arrays.toString(decrypted));
     }
 
 }
