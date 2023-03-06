@@ -8,40 +8,73 @@ public class Authenticator {
     }
 
     //SignPacket takes an encrypted packet and appends an authentication token
-    public byte[] SignPacket(byte[] encryptedPacket)
+    public byte[] SignPacket(final byte[] encryptedPacket)
     {
-        //  Allocate a buffer which can hold our packet and authentication token which is a 4 byte int
-        ByteBuffer buffer = ByteBuffer.allocate(encryptedPacket.length + 4);
-        buffer.putInt(token);
-        buffer.put(encryptedPacket);
-        return buffer.array();
+        //  We first calculate a hash code for the packet
+        int hashCode = calculateHash(encryptedPacket);
+
+        //  We then prepend our hashcode to our original data, returning our now signed packet
+        ByteBuffer authBuffer = ByteBuffer.allocate(encryptedPacket.length + 4);
+        authBuffer.putInt(hashCode);
+        authBuffer.put(encryptedPacket);
+        return authBuffer.array();
     }
 
     //Authenticate takes a signed packet verifies its authenticity
-    public boolean Authenticate(byte[] signedPacket)
+    public byte[] Authenticate(final byte[] signedPacket) throws UnableToAuthenticateException
     {
         // Wrap the signed packet in a ByteBuffer
         ByteBuffer buffer = ByteBuffer.wrap(signedPacket);
-        //  Get the authentication token
-        int packetToken = buffer.getInt();
-        //  Check our token against the packet token
-        return packetToken == token;
+        //  Get the packet signature
+        int packetSignature = buffer.getInt();
+        byte[] packetData = new byte[signedPacket.length - 4];
+        buffer.get(4, packetData);
+
+        //  Recalculate our hash code
+        int hashCode = calculateHash(packetData);
+
+        //  Check our calculated hash code against the signature
+        if(packetSignature == hashCode)
+            return packetData;
+        else
+            throw new UnableToAuthenticateException("Unable to verify packet authenticity!");
+    }
+
+    private int calculateHash(final byte[] data)
+    {
+        ByteBuffer hashBuffer = ByteBuffer.allocate(data.length + 4);
+        hashBuffer.put(data);
+        hashBuffer.putInt(token);
+        hashBuffer.rewind();
+        return hashBuffer.hashCode();
     }
 
     public static void main(String[] args)
     {
         int establishedToken = 4000;
-        int imposterToken = 300;
+        int impostorToken = 4001;
         Authenticator sender = new Authenticator(establishedToken);
         Authenticator receiver = new Authenticator(establishedToken);
-        Authenticator imposter = new Authenticator(imposterToken);
+        Authenticator impostor = new Authenticator(impostorToken);
 
-        String message = "hello friend!";
+        String message = "hello friend! This is a very long message";
 
         byte[] authedPacket = sender.SignPacket(message.getBytes());
-        System.out.println("Is senders an authentic packet: "+ receiver.Authenticate(authedPacket));
-        byte[] imposterPacket = imposter.SignPacket(message.getBytes());
-        System.out.println("Is imposters an authentic packet: "+ receiver.Authenticate(imposterPacket));
+        System.out.println("Testing authenticity of sender packet: ");
+        try {
+            receiver.Authenticate(authedPacket);
+            System.out.println("Sender packet is authentic!");
+        } catch (UnableToAuthenticateException e) {
+            System.out.println("Sender packet is unauthentic!");
+        }
 
+        byte[] impostorPacket = impostor.SignPacket(message.getBytes());
+        System.out.println("Testing authenticity of impostor packet: ");
+        try {
+            receiver.Authenticate(impostorPacket);
+            System.out.println("impostorPacket packet is authentic!");
+        } catch (UnableToAuthenticateException e) {
+            System.out.println("impostorPacket packet is unauthentic!");
+        }
     }
 }

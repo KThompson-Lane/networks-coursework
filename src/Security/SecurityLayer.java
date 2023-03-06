@@ -29,19 +29,18 @@ public class SecurityLayer {
     }
 
     public byte[] AuthAndDecrypt(byte[] encryptedPacket) throws UnableToAuthenticateException {
+
         ByteBuffer EncryptedPacketBuff = ByteBuffer.wrap(encryptedPacket);
-        //  Authenticate
-            //  Throw an exception if we cannot authenticate
-        if(!authenticator.Authenticate(EncryptedPacketBuff.array()))
-            throw new UnableToAuthenticateException();
+
+        //  Try and authenticate, but do not catch an unable to authenticate exception
+        byte[] authedPacket = authenticator.Authenticate(EncryptedPacketBuff.array());
 
         //  After authenticating decrypt packet
-        byte[] dataPacket = new byte[512];
-        EncryptedPacketBuff.get(4, dataPacket);
         if(enableEncryption)
-            dataPacket = SimpleEncryption.DecryptData(dataPacket);
+            authedPacket = SimpleEncryption.DecryptData(authedPacket);
+
         //  Return decrypted data packet
-        return dataPacket;
+        return authedPacket;
     }
 
     //Methods for testing the security layer functionality
