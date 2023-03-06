@@ -98,6 +98,7 @@ public class Speaker implements Runnable {
     {
         //  First receive audio block from recorder
         //  Returns 32 ms (512 byte) audio blocks
+        /*
         byte[] audioBlock = null;
         try {
             audioBlock = recorder.getBlock();
@@ -106,20 +107,14 @@ public class Speaker implements Runnable {
             e.printStackTrace();
             return;
         }
+        */
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
 
         // VOIP LAYER
-        //DatagramPacket packet = new DatagramPacket(voipLayer.receiveFromAudio(audioBlock).array(), 514, destinationAddress, port);
-
         voipLayer.receiveFromAudio(); //todo - rename
-
-
         DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
-
-        //wait for packets to be processed
-
 
         // SECURITY LAYER HERE
 
