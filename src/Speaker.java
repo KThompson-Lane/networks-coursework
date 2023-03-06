@@ -83,7 +83,7 @@ public class Speaker implements Runnable {
         }
 
         //  Then process audio block with the VOIP layer (i.e. numbering)
-        ByteBuffer numberedPacket = ByteBuffer.allocate(514);
+        ByteBuffer numberedPacket = ByteBuffer.allocate(516);
         packetCount++;
         short packetNum = packetCount;
         numberedPacket.putShort(packetNum);
@@ -94,7 +94,7 @@ public class Speaker implements Runnable {
 
         //  Finally send the encrypted packet to the other client
         //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), 514, destinationAddress, port);
+        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), 516, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);

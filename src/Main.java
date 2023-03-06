@@ -4,8 +4,8 @@ public class Main {
     public static void main(String[] args) {
         //TODO:  Take in port, IP and host as Args maybe?
         int portNum = 55555;
-        String ipAddr = "192.168.168.0";
-        boolean Host = false;
+        String ipAddr = "192.168.0.16";
+        boolean Host = true;
 
         Connector connector = new Connector(portNum, ipAddr);
 
