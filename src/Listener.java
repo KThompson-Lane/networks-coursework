@@ -11,7 +11,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 
 public class Listener implements Runnable {
-    private static boolean decrypt = true;
+    private static boolean decrypt = false;
     private final int port;
     private boolean running;
     private DatagramSocket receivingSocket;
@@ -95,6 +95,7 @@ public class Listener implements Runnable {
 
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
+            return;
         } catch (IOException e){
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();
@@ -106,7 +107,7 @@ public class Listener implements Runnable {
         audio = securityLayer.DecryptAndAuth(audio);
 
         //  Then process decrypted audio packet with the VOIP layer
-        voipLayer.receiveFromSecurity(audio); //todo - rename
+        voipLayer.receiveFromSecurity(packetBuffer.array()); //todo - rename
 
         //  Finally output the processed audio block to the speaker
         //try {

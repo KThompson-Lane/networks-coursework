@@ -12,10 +12,9 @@ public class VoipLayer {
     private AudioRecorder recorder;
     private AudioPlayer player;
 
-    //For processing from audio layer
-    private short packetCount = 0; //counts number of packets to send so that they can be sequenced
-
-    private int sentPackets = 0; //counts number of packets to be interleaved
+    //Global variables for interleaving
+    short sentPackets = 0;
+    byte[][] interleaverBuffer = new byte[9][];
 
 
     //For processing from security layer
@@ -39,9 +38,9 @@ public class VoipLayer {
         packetBlock = new ByteBuffer[9]; //todo - change
 
         try {
-            if(listener)
+            //if(listener)
                 player = new AudioPlayer();
-            else
+            //else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -51,7 +50,9 @@ public class VoipLayer {
         }
     }
 
-    public void receiveFromAudio() { //todo - change name
+    //Method for getting a numbered audio block
+    public void receiveFromAudio(int index)
+    {
         //Receive Audio
         byte[] audioBlock = null;
         try {
@@ -61,35 +62,39 @@ public class VoipLayer {
             e.printStackTrace();
             return;
         }
-
+        //  Create new packet
         ByteBuffer numberedPacket = ByteBuffer.allocate(514);
-        // Add numbered header
-        packetCount++;
-        short packetNum = packetCount;
+        short packetNum = (short) (sentPackets + index);
         numberedPacket.putShort(packetNum);
         numberedPacket.put(audioBlock);
-        packetBlock[count] = numberedPacket;
-        count++;
+        interleaverBuffer[index] = numberedPacket.array();
     }
 
+    //Method for getting interleaved voip block
     public byte[] getVoipBlock() {
+        //packetIndex ranges from 0-8
+        short packetIndex = (short) (sentPackets % 9);
 
-        while (count != 9) {
-            receiveFromAudio();
+        //If we get to 9 sent packets, refill buffer and interleave
+        if(packetIndex == 0)
+        {
+            //  Fill InterleaverBuffer w/ 9 audio blocks
+            for(int i = 0; i < 9; i++)
+            {
+                receiveFromAudio(i);
+            }
+            //  Interleave all 9 audio blocks
+            interleave(interleaverBuffer, 3);
         }
 
-        if (sentPackets == 0 || sentPackets == 9) {
-            interleavedPackets = (interleave(packetBlock, 3));
-            sentPackets = 1;
-            count = 0;
-            return interleavedPackets[0].array();
-        } else {
-            return interleavedPackets[sentPackets++].array();
-        }
+        //Return audio block at position packetIndex
+        sentPackets++;
+        return interleaverBuffer[packetIndex];
     }
 
     public void receiveFromSecurity(byte[] bytes) {
-        ByteBuffer packetBuffer = ByteBuffer.wrap(bytes);
+        ByteBuffer packetBuffer = ByteBuffer.wrap(bytes); //todo - do we lose this packet if we go striaght to process? Could this happen?
+        //System.out.println("Packet Received: " + packetBuffer.getShort(0));
         if(receivedPackets < 9) {
             interleavedPackets[receivedPackets] = packetBuffer;
             receivedPackets++;
@@ -134,7 +139,7 @@ public class VoipLayer {
         //for (int i = 0; i < 9; i++) {
         //    //TEST - Ensure interleaver working correctly
         //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
-//
+
         //    int packetNum = testBuff.getShort();
         //    System.out.println(packetNum);
         //}
@@ -147,14 +152,14 @@ public class VoipLayer {
 
 
     //todo - find a way to do all of this with less loops!!!!
-    public ByteBuffer[] interleave(ByteBuffer[] packets, int blockSize) {
+    public ByteBuffer[] interleave(byte[][] packets, int blockSize) {
         // packets loaded into d * d blocks e.g 3 * 3 for 9 packets
         int count = 0;
         //Add to block as long as it isn't full
         ByteBuffer[][] block = new ByteBuffer[blockSize][blockSize];
         for (int i = 0; i < blockSize; i++) {
             for (int j = 0; j < blockSize; j++) {
-                block[i][j] = packets[count];
+                block[i][j] = ByteBuffer.wrap(packets[count]);
                 count++;
             }
         }

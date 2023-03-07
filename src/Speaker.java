@@ -12,7 +12,7 @@ import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
 
 public class Speaker implements Runnable {
-    private static boolean encrypt = true;
+    private static boolean encrypt = false;
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
@@ -100,7 +100,7 @@ public class Speaker implements Runnable {
     public void TransmitPayload()
     {
         // VOIP LAYER
-        voipLayer.receiveFromAudio(); //todo - rename
+        //voipLayer.receiveFromAudio(); //todo - rename
         //DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
 
         // SECURITY LAYER HERE
