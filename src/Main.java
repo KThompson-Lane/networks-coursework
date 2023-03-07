@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         InetAddress destinationAddress;
         int destinationPort = 55555;
-        boolean Host;
+        boolean Host, Encrypt = false, Decrypt = false;
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
@@ -46,6 +46,30 @@ public class Main {
             }
         }
 
+        //  Get user to enter encryption settings
+
+        try{
+            System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both.");
+            switch (reader.readLine().toLowerCase())
+            {
+                case "1":
+                    System.out.println("Enabling only encryption!");
+                    Encrypt = true;
+                    break;
+                case "2":
+                    System.out.println("Enabling only decryption!");
+                    Decrypt = true;
+                    break;
+                default:
+                    System.out.println("Enabling encryption and decryption!");
+                    Encrypt = true;
+                    Decrypt = true;
+            }
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
         Connector connector = new Connector(destinationPort, destinationAddress.getHostName());
 
         //1: Set up our connection as either host or client
@@ -65,9 +89,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number and secret key
-        Listener listener = new Listener(destinationPort, secretKey);
+        Listener listener = new Listener(destinationPort, secretKey, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress.getHostName(), secretKey);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress.getHostName(), secretKey, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();

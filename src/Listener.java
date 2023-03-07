@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Listener implements Runnable {
-    private static boolean decrypt = true;
     private final int port;
     private boolean running;
     private DatagramSocket receivingSocket;
@@ -18,10 +17,9 @@ public class Listener implements Runnable {
     private final SecurityLayer securityLayer;
     List<Integer> packetNums;
 
-    public Listener(int portNum, long key) {
+    public Listener(int portNum, long key, boolean decrypt) {
         port = portNum;
         packetNums = new ArrayList<>();
-
         //  Set up Receiving Socket
 
         try{

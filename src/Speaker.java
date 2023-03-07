@@ -7,7 +7,6 @@ import java.net.*;
 import java.nio.ByteBuffer;
 
 public class Speaker implements Runnable {
-    private static boolean encrypt = true;
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
@@ -16,7 +15,7 @@ public class Speaker implements Runnable {
     private short packetCount;
     private final SecurityLayer securityLayer;
 
-    public Speaker(int portNum, String destAddress, long key) {
+    public Speaker(int portNum, String destAddress, long key, final boolean encrypt) {
         //  Set port number to argument
         this.port = portNum;
         packetCount = 0;
