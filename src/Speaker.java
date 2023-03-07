@@ -21,6 +21,8 @@ public class Speaker implements Runnable {
     private short packetCount;
 
     private final VoipLayer voipLayer;
+
+    private final SecurityLayer securityLayer;
     
     public Speaker(int portNum, String destAddress, long key, int socketNum) {
         //  Set port number to argument
@@ -73,6 +75,7 @@ public class Speaker implements Runnable {
 
         //  Set up VOIP layer
         voipLayer = new VoipLayer();
+        securityLayer = new SecurityLayer(key, encrypt);
     }
 
     public void Start()
@@ -96,27 +99,12 @@ public class Speaker implements Runnable {
     }
     public void TransmitPayload()
     {
-        //  First receive audio block from recorder
-        //  Returns 32 ms (512 byte) audio blocks
-        /*
-        byte[] audioBlock = null;
-        try {
-            audioBlock = recorder.getBlock();
-        } catch (IOException e) {
-            System.out.println("ERROR: Speaker: Some random IO error occurred!");
-            e.printStackTrace();
-            return;
-        }
-        */
-
-        //  Finally send the encrypted packet to the other client
-        //  Make a DatagramPacket with client address and port number
-
         // VOIP LAYER
         voipLayer.receiveFromAudio(); //todo - rename
-        DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
+        //DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
 
         // SECURITY LAYER HERE
+        DatagramPacket packet = new DatagramPacket (securityLayer.EncryptAndAuth(voipLayer.getVoipBlock()), 514, destinationAddress, port); //todo - comment this
 
 
         //Send it
