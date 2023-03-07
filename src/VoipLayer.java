@@ -32,13 +32,18 @@ public class VoipLayer {
 
     private int count = 0; //Keeps track of which packets have been interleaved/de-interleaved
 
-    public VoipLayer() {
+    //private Boolean listener;
+
+    public VoipLayer(Boolean listener) {
         packetNums = new ArrayList<>();
         packetBlock = new ByteBuffer[9]; //todo - change
 
         try {
-            recorder = new AudioRecorder();
-            player = new AudioPlayer();
+            if(listener)
+                player = new AudioPlayer();
+            else
+                recorder = new AudioRecorder();
+
         } catch (LineUnavailableException e) {
             System.out.println("ERROR: Speaker: Could not start audio recorder.");
             e.printStackTrace();
@@ -125,7 +130,7 @@ public class VoipLayer {
 
 
     public static void main(String[] args) {
-        VoipLayer test = new VoipLayer();
+        VoipLayer test = new VoipLayer(true);
         //for (int i = 0; i < 9; i++) {
         //    //TEST - Ensure interleaver working correctly
         //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());

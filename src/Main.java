@@ -6,8 +6,8 @@ public class Main {
     public static void main(String[] args) {
         //TODO:  Take in port, IP and host as Args maybe?
         int portNum = 55555;
-        String ipAddr = "192.168.0.17";
-        boolean Host = true;
+        String ipAddr = "192.168.0.18";
+        boolean Host = false;
         Scanner in = new Scanner(System.in);
         int socketNum = 1;
 

@@ -51,16 +51,16 @@ public class Listener implements Runnable {
             System.exit(0);
         }
         //  Set up audio player
-        try{
-            player = new AudioPlayer();
-        } catch (LineUnavailableException e) {
-            System.out.println("ERROR: Listener: Could not start audio player.");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        //try{
+        //    player = new AudioPlayer();
+        //} catch (LineUnavailableException e) {
+        //    System.out.println("ERROR: Listener: Could not start audio player.");
+        //    e.printStackTrace();
+        //    System.exit(0);
+        //}
         //  Set up security layer
         securityLayer = new SecurityLayer(key, decrypt);
-        voipLayer = new VoipLayer();
+        voipLayer = new VoipLayer(true);
     }
     public void Start()
     {

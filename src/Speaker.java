@@ -65,16 +65,16 @@ public class Speaker implements Runnable {
         }
 
         //  Try and create recorder
-        try{
-            recorder = new AudioRecorder();
-        } catch (LineUnavailableException e) {
-            System.out.println("ERROR: Speaker: Could not start audio recorder.");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        //try{
+        //    recorder = new AudioRecorder();
+        //} catch (LineUnavailableException e) {
+        //    System.out.println("ERROR: Speaker: Could not start audio recorder.");
+        //    e.printStackTrace();
+        //    System.exit(0);
+        //}
 
         //  Set up VOIP layer
-        voipLayer = new VoipLayer();
+        voipLayer = new VoipLayer(false);
         securityLayer = new SecurityLayer(key, encrypt);
     }
 
