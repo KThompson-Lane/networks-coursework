@@ -67,10 +67,10 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        ByteBuffer packetBuffer = ByteBuffer.allocate(514);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 514);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(518);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 518);
 
-        byte[] audio = new byte[512];
+        byte[] audio = new byte[516];
 
         try {
             receivingSocket.receive(packet);
@@ -88,8 +88,9 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
+        byte[] test;
         try{
-            audio = securityLayer.AuthAndDecrypt(audio);
+            test = securityLayer.AuthAndDecrypt(audio);
         }catch (UnableToAuthenticateException e)
         {
             //TODO: Do something when we receive an unauthentic packet
@@ -100,7 +101,7 @@ public class Listener implements Runnable {
 
         //  Finally output the processed audio block to the speaker
         try {
-            player.playBlock(audio);
+            player.playBlock(test);
         } catch (IOException e) {
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();
