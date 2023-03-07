@@ -133,10 +133,10 @@ public class VoipLayer {
         //    System.out.println(packetNum);
         //}
 
-        //for (int i = 0; i < 18; i++) {
-        //    //TEST - Ensure unInterleaver working correctly
-        //    test.receiveFromSecurity(test.getVoipBlock());
-        //}
+        for (int i = 0; i < 18; i++) {
+            //TEST - Ensure unInterleaver working correctly
+            test.receiveFromSecurity(test.getVoipBlock());
+        }
 
     }
 
