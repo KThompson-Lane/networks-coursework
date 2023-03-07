@@ -18,15 +18,29 @@ public class Main {
         //  TODO: Get user to choose to enable encryption or not
         try {
             System.out.println("Please enter 'host' to run as the host device, or 'client' to run as the client device...");
-            switch (reader.readLine().toLowerCase())
-            {
-                case "host":
-                    System.out.println("Running as host!");
-                    Host = true;
-                    break;
-                default:
-                    System.out.println("Running as client!");
-                    Host = false;
+            if (reader.readLine().equalsIgnoreCase("host")) {
+                System.out.println("Running as host!");
+                Host = true;
+            } else {
+                System.out.println("Running as client!");
+                Host = false;
+            }
+
+            System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both.");
+            switch (reader.readLine().toLowerCase()) {
+                case "1" -> {
+                    System.out.println("Enabling only encryption!");
+                    Encrypt = true;
+                }
+                case "2" -> {
+                    System.out.println("Enabling only decryption!");
+                    Decrypt = true;
+                }
+                default -> {
+                    System.out.println("Enabling encryption and decryption!");
+                    Encrypt = true;
+                    Decrypt = true;
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -46,28 +60,7 @@ public class Main {
             }
         }
 
-        //  Get user to enter encryption settings
 
-        try{
-            System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both.");
-            switch (reader.readLine().toLowerCase())
-            {
-                case "1":
-                    System.out.println("Enabling only encryption!");
-                    Encrypt = true;
-                    break;
-                case "2":
-                    System.out.println("Enabling only decryption!");
-                    Decrypt = true;
-                    break;
-                default:
-                    System.out.println("Enabling encryption and decryption!");
-                    Encrypt = true;
-                    Decrypt = true;
-            }
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
 
         Connector connector = new Connector(destinationPort, destinationAddress.getHostName());
