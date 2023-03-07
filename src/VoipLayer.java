@@ -30,9 +30,9 @@ public class VoipLayer {
         packetNums = new ArrayList<>();
 
         try {
-            if(listener)
+            //if(listener)
                 player = new AudioPlayer();
-            else
+            //else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -79,9 +79,18 @@ public class VoipLayer {
             interleaverBuffer = interleave(interleaverBuffer, 3);
         }
 
+        //Add new sequence number
+        ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
+        short packetNum = (short) (sentPackets);
+        sequencedPacket.putShort(packetNum);
+        sequencedPacket.put(interleaverBuffer[packetIndex]);
+
+        byte[] audio = new byte[516];
+        sequencedPacket.get(0, audio);
+
         //Return audio block at position packetIndex
         sentPackets++;
-        return interleaverBuffer[packetIndex];
+        return audio;
     }
 
     public void receiveFromSecurity(byte[] bytes) {
@@ -125,18 +134,18 @@ public class VoipLayer {
 
     public static void main(String[] args) {
         VoipLayer test = new VoipLayer(true);
-        //for (int i = 0; i < 9; i++) {
-        //    //TEST - Ensure interleaver working correctly
-        //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
-//
-        //    int packetNum = testBuff.getShort();
-        //    System.out.println(packetNum);
-        //}
+        for (int i = 0; i < 9; i++) {
+            //TEST - Ensure interleaver working correctly
+            ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
 
-        for (int i = 0; i < 18; i++) {
-            //TEST - Ensure unInterleaver working correctly
-            test.receiveFromSecurity(test.getVoipBlock());
+            int packetNum = testBuff.getShort();
+            System.out.println(packetNum);
         }
+
+        //for (int i = 0; i < 18; i++) {
+        //    //TEST - Ensure unInterleaver working correctly
+        //    test.receiveFromSecurity(test.getVoipBlock());
+        //}
 
     }
 
