@@ -23,19 +23,11 @@ public class VoipLayer {
 
 
     //For interleaving/de-interleaving
-    private ByteBuffer[] packetBlock;
     private byte[][] interleavedPackets = new byte[9][];
     private byte[][] unInterleavedPackets = new byte[9][];
-    private int countRow = 0;
-    private int countColumn = 0;
-
-    private int count = 0; //Keeps track of which packets have been interleaved/de-interleaved
-
-    //private Boolean listener;
 
     public VoipLayer(Boolean listener) {
         packetNums = new ArrayList<>();
-        packetBlock = new ByteBuffer[9]; //todo - change
 
         try {
             if(listener)
@@ -94,10 +86,8 @@ public class VoipLayer {
 
     public void receiveFromSecurity(byte[] bytes) {
         //ByteBuffer packetBuffer = ByteBuffer.wrap(bytes); //todo - do we lose this packet if we go striaght to process? Could this happen?
-        int test = receivedPackets++ % 9; //todo - remove
-
-        interleavedPackets[test] = bytes;
-
+        int index = receivedPackets++ % 9;
+        interleavedPackets[index] = bytes;
 
         if(receivedPackets % 9 == 0){
            process();
@@ -106,23 +96,20 @@ public class VoipLayer {
     }
 
     public void process(){
-
-            //Un-interleave
-            unInterleavedPackets = (unInterleave(interleavedPackets, 3));
-            //count = 0;
+        //Un-interleave
+        unInterleavedPackets = (unInterleave(interleavedPackets, 3));
 
         // Remove numbered header
         for (int i = 0; i < 9; i++) {
-            byte[] test = unInterleavedPackets[i]; //todo - rename
-            ByteBuffer test2 = ByteBuffer.wrap(test); //todo - rename
-            int packetNum = test2.getShort(0); //todo - rename
+            byte[] bytes = unInterleavedPackets[i];
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            int packetNum = buffer.getShort(0);
             packetNums.add(packetNum); //todo - sort this
             System.out.println("Packet Received: " + packetNum);
 
             // Send audio to Audio Layer
             byte[] audio = new byte[512];
-            test2.get(2, audio); //todo - rename
-            //i++;
+            buffer.get(2, audio);
 
             //  Finally output the processed audio block to the speaker
             try {
