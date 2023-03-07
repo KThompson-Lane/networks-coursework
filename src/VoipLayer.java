@@ -79,7 +79,7 @@ public class VoipLayer {
             interleaverBuffer = interleave(interleaverBuffer, 3);
         }
 
-        //Add new sequence number
+        //Add post-interleave sequence number
         ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
         short packetNum = (short) (sentPackets);
         sequencedPacket.putShort(packetNum);
@@ -94,13 +94,16 @@ public class VoipLayer {
     }
 
     public void receiveFromSecurity(byte[] bytes) {
-        //ByteBuffer packetBuffer = ByteBuffer.wrap(bytes); //todo - do we lose this packet if we go striaght to process? Could this happen?
+        //Remove post-interleave sequence numbers
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        int packetNum = buffer.getShort(0);
+        System.out.println("Packet Received: " + packetNum);
+
         int index = receivedPackets++ % 9;
         interleavedPackets[index] = bytes;
 
         if(receivedPackets % 9 == 0){
            process();
-           //receivedPackets++;
         }
     }
 
@@ -114,7 +117,7 @@ public class VoipLayer {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             int packetNum = buffer.getShort(0);
             packetNums.add(packetNum); //todo - sort this
-            System.out.println("Packet Received: " + packetNum);
+            //System.out.println("Packet Received: " + packetNum);
 
             // Send audio to Audio Layer
             byte[] audio = new byte[512];
@@ -134,19 +137,18 @@ public class VoipLayer {
 
     public static void main(String[] args) {
         VoipLayer test = new VoipLayer(true);
-        for (int i = 0; i < 9; i++) {
-            //TEST - Ensure interleaver working correctly
-            ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
-
-            int packetNum = testBuff.getShort();
-            System.out.println(packetNum);
-        }
-
-        //for (int i = 0; i < 18; i++) {
-        //    //TEST - Ensure unInterleaver working correctly
-        //    test.receiveFromSecurity(test.getVoipBlock());
+        //for (int i = 0; i < 9; i++) {
+        //    //TEST - Ensure interleaver working correctly
+        //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
+//
+        //    int packetNum = testBuff.getShort();
+        //    System.out.println(packetNum);
         //}
 
+        for (int i = 0; i < 18; i++) {
+            //TEST - Ensure unInterleaver working correctly
+            test.receiveFromSecurity(test.getVoipBlock());
+        }
     }
 
 
