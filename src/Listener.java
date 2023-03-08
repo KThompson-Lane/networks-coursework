@@ -6,6 +6,8 @@ import java.net.*;
 import java.nio.ByteBuffer;
 
 public class Listener implements Runnable {
+    //  Calculated in Speaker.java
+    static final int TOTAL_PACKET_SIZE = 520;
     private static final boolean decrypt = false;
     private boolean running;
     private DatagramSocket receivingSocket;
@@ -71,9 +73,8 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        //  TODO: Work out size of our packets
-        ByteBuffer packetBuffer = ByteBuffer.allocate(518);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 518);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(520);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 520);
 
         try {
             receivingSocket.receive(packet);

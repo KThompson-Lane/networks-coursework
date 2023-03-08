@@ -78,11 +78,11 @@ public class Speaker implements Runnable {
     public void TransmitPayload()
     {
         // VOIP LAYER
-        //  First retrieve audio block from the VOIP layer including VOIP header info
+        //  First retrieve audio block from the VOIP layer including VOIP header info (512 + 4 bytes)
         byte[] voipPacket = voipLayer.getVoipBlock();
 
         //  SECURITY LAYER
-        //  Then pass packet to SecurityLayer to encrypt/authenticate
+        //  Then pass packet to SecurityLayer to encrypt/authenticate to produce our 520 byte (516 + 4 byte header) packet
         byte[] securePacket = securityLayer.EncryptAndSign(voipPacket);
 
         //  NETWORK/TRANSPORT LAYER
