@@ -73,8 +73,8 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        ByteBuffer packetBuffer = ByteBuffer.allocate(520);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 520);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(TOTAL_PACKET_SIZE);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, TOTAL_PACKET_SIZE);
 
         try {
             receivingSocket.receive(packet);
