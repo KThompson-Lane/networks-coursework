@@ -67,7 +67,7 @@ public class Main {
             }
         }
 
-        Connector connector = new Connector(destinationPort, destinationAddress.getHostName());
+        Connector connector = new Connector(destinationPort, destinationAddress);
 
         //1: Set up our connection as either host or client
         if(Host)
@@ -77,7 +77,7 @@ public class Main {
 
         //  TODO: Consider merging connector and KeyExchanger class
         //  After establishing connection, determine shared secret key
-        KeyExchanger keyExchanger = new KeyExchanger(destinationPort, destinationAddress.getHostName());
+        KeyExchanger keyExchanger = new KeyExchanger(destinationPort, destinationAddress);
         long secretKey;
         if(Host)
             secretKey = keyExchanger.ExchangeAsHost();
@@ -88,7 +88,7 @@ public class Main {
         //  New thread for listen, passing our port number and secret key
         Listener listener = new Listener(destinationPort, secretKey, socketNum, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress.getHostName(), secretKey, socketNum, Encrypt);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();

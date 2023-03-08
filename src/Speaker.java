@@ -7,23 +7,16 @@ import uk.ac.uea.cmp.voip.*;
 public class Speaker implements Runnable {
     private boolean running;
     private final int port;
-    private InetAddress destinationAddress;
+    private final InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
     private final VoipLayer voipLayer;
     private final SecurityLayer securityLayer;
 
-    public Speaker(int portNum, String destAddress, long key, int socketNum, boolean encrypt) {
+    public Speaker(int portNum, InetAddress destAddress, long key, int socketNum, boolean encrypt) {
         //  Set port number to argument
         this.port = portNum;
-        //  Try and setup client IP from argument
-        try {
-            destinationAddress = InetAddress.getByName(destAddress);
-        } catch (UnknownHostException e) {
-            System.out.println("ERROR: Speaker: Invalid destination address");
-            e.printStackTrace();
-            System.exit(0);
-        }
-
+        //  Setup client IP from argument
+        destinationAddress = destAddress;
         //  Try and create socket for sending from
         try{
             // Set up Datagram Socket
