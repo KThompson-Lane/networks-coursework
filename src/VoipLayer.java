@@ -137,55 +137,38 @@ public class VoipLayer {
 
         int index = packetNum % 9;
 
-        // If packet belongs in current block
-        if(packetNum / 9 == blockNum) {
-            // Check if any packets were missed
-            while (lastPacketNum + 1 < packetNum){
-                // repeat last packet
-                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
-                lastPacketNum++;
-                receivedPackets++; //todo - get rid of
-            }
-
-            // Add to array
-            interleavedPackets[index] = bytes;
-            lastPacketNum = index;
-            receivedPackets++;
-
-            // Check if array is full
-            if (receivedPackets % 9 == 0) {
-                blockNum++;
-                lastPacketNum = 0;
-                process();
-            }
+        if(packetNum / 9 < blockNum)
+        {
+            //do nothing
+            return;
         }
         // If packet belongs in next block
         else if(packetNum / 9 > blockNum) {
-            // Fill in all the rest of this block with repeated packets, then process, then add packet to array
-            // Repeat last packet until the end of the block
-            while (lastPacketNum + 1 < 9){ //todo - issue occurs here if no blocks were filled in for this block, but this shouldn't happen
-                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
-                lastPacketNum++;
-                receivedPackets++;
-            }
-
             // Process
             process();
             blockNum++;
-            lastPacketNum = 0;
 
             // Add packet to new block
             interleavedPackets[index] = bytes;
-            lastPacketNum = index;
-            receivedPackets++;
         }
-        // If packet belongs in previous block
+        // If packet belongs in current block
         else {
-            // Do nothing
+            // Add to array
+            interleavedPackets[index] = bytes;
         }
     }
 
     public void process(){ //todo - rename
+        int good = 0;
+        for (int i = 0; i < interleavedPackets.length; i++) {
+            if(interleavedPackets[i] == null){
+                interleavedPackets[i] = interleavedPackets[good];
+            }
+            else {
+                good = i;
+            }
+        }
+
         //Un-interleave
         unInterleavedPackets = (unInterleave(interleavedPackets, 3));
 
@@ -207,6 +190,10 @@ public class VoipLayer {
                 System.out.println("ERROR: Listener: Some random IO error occurred!");
                 e.printStackTrace();
             }
+        }
+
+        for (int i = 0; i < interleavedPackets.length; i++) {
+            interleavedPackets[i] = null;
         }
     }
 
