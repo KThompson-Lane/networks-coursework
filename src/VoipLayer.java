@@ -5,6 +5,7 @@ import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class VoipLayer {
@@ -192,9 +193,12 @@ public class VoipLayer {
             }
         }
 
-        for (int i = 0; i < interleavedPackets.length; i++) {
+        for (int i = 1; i < interleavedPackets.length; i++) {
             interleavedPackets[i] = null;
         }
+        byte[] test = new byte[516];
+        Arrays.fill(test, (byte)0);
+        interleavedPackets[0] = test;
     }
 
 
