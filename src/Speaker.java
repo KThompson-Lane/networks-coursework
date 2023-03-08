@@ -12,13 +12,16 @@ import uk.ac.uea.cmp.voip.DatagramSocket3;
 import uk.ac.uea.cmp.voip.DatagramSocket4;
 
 public class Speaker implements Runnable {
-    private static boolean encrypt = true;
+    private static boolean encrypt = false;
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
     private AudioRecorder recorder;
     private short packetCount;
+
+    private final VoipLayer voipLayer;
+
     private final SecurityLayer securityLayer;
     
     public Speaker(int portNum, String destAddress, long key, int socketNum) {
@@ -62,14 +65,16 @@ public class Speaker implements Runnable {
         }
 
         //  Try and create recorder
-        try{
-            recorder = new AudioRecorder();
-        } catch (LineUnavailableException e) {
-            System.out.println("ERROR: Speaker: Could not start audio recorder.");
-            e.printStackTrace();
-            System.exit(0);
-        }
-        //  Set up security layer
+        //try{
+        //    recorder = new AudioRecorder();
+        //} catch (LineUnavailableException e) {
+        //    System.out.println("ERROR: Speaker: Could not start audio recorder.");
+        //    e.printStackTrace();
+        //    System.exit(0);
+        //}
+
+        //  Set up VOIP layer
+        voipLayer = new VoipLayer(false);
         securityLayer = new SecurityLayer(key, encrypt);
     }
 
@@ -94,30 +99,14 @@ public class Speaker implements Runnable {
     }
     public void TransmitPayload()
     {
-        //  First receive audio block from recorder
-        //  Returns 32 ms (512 byte) audio blocks
-        byte[] audioBlock = null;
-        try {
-            audioBlock = recorder.getBlock();
-        } catch (IOException e) {
-            System.out.println("ERROR: Speaker: Some random IO error occurred!");
-            e.printStackTrace();
-            return;
-        }
+        // VOIP LAYER
+        //voipLayer.receiveFromAudio(); //todo - rename
+        //DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
 
-        //  Then process audio block with the VOIP layer (i.e. numbering)
-        ByteBuffer numberedPacket = ByteBuffer.allocate(514);
-        packetCount++;
-        short packetNum = packetCount;
-        numberedPacket.putShort(packetNum);
+        // SECURITY LAYER HERE
+        DatagramPacket packet = new DatagramPacket (securityLayer.EncryptAndAuth(voipLayer.getVoipBlock()), 514, destinationAddress, port); //todo - comment this
 
-        //  Then pass packet to SecurityLayer to encrypt/authenticate
-        audioBlock = securityLayer.EncryptAndAuth(audioBlock);
-        numberedPacket.put(audioBlock);
 
-        //  Finally send the encrypted packet to the other client
-        //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), 514, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);

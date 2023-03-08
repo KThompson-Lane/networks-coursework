@@ -9,21 +9,18 @@ import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Listener implements Runnable {
-    private static boolean decrypt = true;
+    private static boolean decrypt = false;
     private final int port;
     private boolean running;
     private DatagramSocket receivingSocket;
     private AudioPlayer player;
     private final SecurityLayer securityLayer;
-    List<Integer> packetNums;
+    private final VoipLayer voipLayer;
     
     public Listener(int portNum, long key, int socketNum) {
         port = portNum;
-        packetNums = new ArrayList<>();
 
         //  Set up Receiving Socket
         try{
@@ -42,6 +39,8 @@ public class Listener implements Runnable {
                 case 4 :
                     this.receivingSocket = new DatagramSocket4(port);
                     break;
+                default:
+                    //todo - error
             }
 
             //TODO: Investigate what timeout we should have
@@ -52,15 +51,16 @@ public class Listener implements Runnable {
             System.exit(0);
         }
         //  Set up audio player
-        try{
-            player = new AudioPlayer();
-        } catch (LineUnavailableException e) {
-            System.out.println("ERROR: Listener: Could not start audio player.");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        //try{
+        //    player = new AudioPlayer();
+        //} catch (LineUnavailableException e) {
+        //    System.out.println("ERROR: Listener: Could not start audio player.");
+        //    e.printStackTrace();
+        //    System.exit(0);
+        //}
         //  Set up security layer
         securityLayer = new SecurityLayer(key, decrypt);
+        voipLayer = new VoipLayer(true);
     }
     public void Start()
     {
@@ -92,13 +92,10 @@ public class Listener implements Runnable {
 
         try {
             receivingSocket.receive(packet);
-            int packetNum = packetBuffer.getShort();
-            packetNums.add(packetNum); //todo - sort this
-            //System.out.println("Packet Received: " + packetNum);
 
-            packetBuffer.get(audio);
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
+            return;
         } catch (IOException e){
             System.out.println("ERROR: Listener: Some random IO error occurred!");
             e.printStackTrace();
@@ -106,17 +103,19 @@ public class Listener implements Runnable {
         }
 
         //  Then pass packet to SecurityLayer to decrypt/authenticate
+       //audio = voipLayer.receiveFromSecurity(packetBuffer);
         audio = securityLayer.DecryptAndAuth(audio);
 
         //  Then process decrypted audio packet with the VOIP layer
+        voipLayer.receiveFromSecurity(packetBuffer.array()); //todo - rename
 
         //  Finally output the processed audio block to the speaker
-        try {
-            player.playBlock(audio);
-        } catch (IOException e) {
-            System.out.println("ERROR: Listener: Some random IO error occurred!");
-            e.printStackTrace();
-        }
+        //try {
+        //    player.playBlock(audio);
+        //} catch (IOException e) {
+        //    System.out.println("ERROR: Listener: Some random IO error occurred!");
+        //    e.printStackTrace();
+        //}
     }
     public void Terminate()
     {
