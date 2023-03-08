@@ -7,9 +7,9 @@ public class Main {
     public static void main(String[] args) {
         //TODO:  Take in port, IP and host as Args maybe?
         int portNum = 55555;
-        String ipAddr = "192.168.0.18";
-        boolean Host = false;
-        boolean TestImpostor = false;
+        String ipAddr = "192.168.0.11";
+        boolean Host = true;
+        boolean TestImpostor = true;
         Scanner in = new Scanner(System.in);
         int socketNum = 1;
 

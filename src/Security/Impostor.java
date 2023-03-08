@@ -52,10 +52,17 @@ public class Impostor  implements Runnable{
 
         //Send it
         try {
+            System.out.println("sending faker");
             sendingSocket.send(packet);
         } catch (IOException e) {
             System.out.println("ERROR: Speaker: Some random IO error occurred!");
             e.printStackTrace();
+        }
+        //  Then sleep for a bit
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
     public void Terminate()
