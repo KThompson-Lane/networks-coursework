@@ -26,6 +26,10 @@ public class VoipLayer {
     private byte[][] interleavedPackets = new byte[9][];
     private byte[][] unInterleavedPackets = new byte[9][];
 
+    private int lastPacketNum = -1;
+    private byte[][] outOfOrderBytes = new byte[9][]; //todo - figure out length
+    private int outOfOrderCount = 0;
+
     public VoipLayer(Boolean listener) {
         packetNums = new ArrayList<>();
 
@@ -93,21 +97,29 @@ public class VoipLayer {
         return audio;
     }
 
-    public void receiveFromSecurity(byte[] bytes) {
+    public void receiveFromSecurity(byte[] bytes) { //todo - rename
         //Remove post-interleave sequence numbers
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int packetNum = buffer.getShort(0);
-        System.out.println("Packet Received: " + packetNum);
+        //System.out.println("Packet Received: " + packetNum);
+        
+        receivedPackets++;
+        int index = packetNum % 9;
+        if(index < 9) {
+            interleavedPackets[index] = bytes;
 
-        int index = receivedPackets++ % 9;
-        interleavedPackets[index] = bytes;
-
-        if(receivedPackets % 9 == 0){
-           process();
+            if(receivedPackets % 9 == 0){
+                process();
+            }
+        }
+        else {
+            //todo - compensate for lost packets
+            process();
+            interleavedPackets[index] = bytes;
         }
     }
 
-    public void process(){
+    public void process(){ //todo - rename
         //Un-interleave
         unInterleavedPackets = (unInterleave(interleavedPackets, 3));
 
@@ -115,9 +127,8 @@ public class VoipLayer {
         for (int i = 0; i < 9; i++) {
             byte[] bytes = unInterleavedPackets[i];
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            int packetNum = buffer.getShort(0);
-            packetNums.add(packetNum); //todo - sort this
-            //System.out.println("Packet Received: " + packetNum);
+            int packetNum = buffer.getShort(2);
+            System.out.println("Packet Received: " + packetNum);
 
             // Send audio to Audio Layer
             byte[] audio = new byte[512];
