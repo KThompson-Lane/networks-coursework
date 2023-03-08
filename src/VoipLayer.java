@@ -101,13 +101,13 @@ public class VoipLayer {
         //Remove post-interleave sequence numbers
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int packetNum = buffer.getShort(0);
-        //System.out.println("Packet Received: " + packetNum);
 
         receivedPackets++;
         int index = packetNum % 9;
         // Channel 3
         if(index < 9) {
             interleavedPackets[index] = bytes;
+            lastPacketNum++;
 
             if(receivedPackets % 9 == 0){
                 process();
@@ -115,6 +115,14 @@ public class VoipLayer {
         }
         else {
             //todo - compensate for lost packets
+            while ((lastPacketNum + 1) % 9 != 0) // while array isn't full
+            {
+                // repeat last packet
+                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
+                lastPacketNum++;
+                receivedPackets++;
+            }
+
             process();
             interleavedPackets[index] = bytes;
         }
@@ -127,17 +135,15 @@ public class VoipLayer {
         int packetNum = buffer.getShort(0);
 
         receivedPackets++;
-        if(packetNum != lastPacketNum + 1) {
-            while (packetNum != lastPacketNum + 1)
+        //if(packetNum != lastPacketNum + 1) {
+            while (packetNum != lastPacketNum + 1 && (lastPacketNum + 1) % 9 != 0)
             {
                 // repeat last packet
                 interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
                 lastPacketNum++;
                 receivedPackets++;
             }
-            int index = packetNum % 9;
-            interleavedPackets[index] = bytes;
-        }
+        //}
 
         int index = packetNum % 9;
         interleavedPackets[index] = bytes;
@@ -187,7 +193,7 @@ public class VoipLayer {
 
         for (int i = 0; i < 18; i++) {
             //TEST - Ensure unInterleaver working correctly
-            test.testMethod(test.getVoipBlock());
+            test.receiveFromSecurity(test.getVoipBlock());
         }
     }
 
