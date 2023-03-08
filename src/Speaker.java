@@ -104,7 +104,7 @@ public class Speaker implements Runnable {
         //DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
 
         // SECURITY LAYER HERE
-        DatagramPacket packet = new DatagramPacket (securityLayer.EncryptAndAuth(voipLayer.getVoipBlock()), 514, destinationAddress, port); //todo - comment this
+        DatagramPacket packet = new DatagramPacket (securityLayer.EncryptAndAuth(voipLayer.getVoipBlock()), 516, destinationAddress, port); //todo - comment this
 
 
         //Send it

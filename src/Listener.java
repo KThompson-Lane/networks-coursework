@@ -85,8 +85,8 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        ByteBuffer packetBuffer = ByteBuffer.allocate(514);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 514);
+        ByteBuffer packetBuffer = ByteBuffer.allocate(516);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 516);
 
         byte[] audio = new byte[512];
 
@@ -107,7 +107,7 @@ public class Listener implements Runnable {
         audio = securityLayer.DecryptAndAuth(audio);
 
         //  Then process decrypted audio packet with the VOIP layer
-        voipLayer.receiveFromSecurity(packetBuffer.array()); //todo - rename
+        voipLayer.processNumber(packetBuffer.array()); //todo - rename
 
         //  Finally output the processed audio block to the speaker
         //try {

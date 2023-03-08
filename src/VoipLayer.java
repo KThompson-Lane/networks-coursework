@@ -28,7 +28,7 @@ public class VoipLayer {
     private byte[][] interleavedPackets = new byte[9][];
     private byte[][] unInterleavedPackets = new byte[9][];
 
-    private int lastPacketNum = -1;
+    private int lastPacketNum = 0;
     private byte[][] outOfOrderBytes = new byte[9][]; //todo - figure out length
     private int outOfOrderCount = 0;
 
@@ -36,9 +36,9 @@ public class VoipLayer {
         packetNums = new ArrayList<>();
 
         try {
-            //if(listener)
+            if(listener)
                 player = new AudioPlayer();
-            //else
+            else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -140,22 +140,22 @@ public class VoipLayer {
         // If packet belongs in current block
         if(packetNum / 9 == blockNum) {
             // Check if any packets were missed
-            //todo - check if less than
             while (lastPacketNum + 1 < packetNum){
                 // repeat last packet
-                interleavedPackets[lastPacketNum % 9] = interleavedPackets[lastPacketNum % 9 - 1];
+                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
                 lastPacketNum++;
                 receivedPackets++; //todo - get rid of
             }
 
             // Add to array
             interleavedPackets[index] = bytes;
-            lastPacketNum++;
+            lastPacketNum = index;
             receivedPackets++;
 
             // Check if array is full
             if (receivedPackets % 9 == 0) {
                 blockNum++;
+                lastPacketNum = 0;
                 process();
             }
         }
@@ -163,8 +163,8 @@ public class VoipLayer {
         else if(packetNum / 9 > blockNum) {
             // Fill in all the rest of this block with repeated packets, then process, then add packet to array
             // Repeat last packet until the end of the block
-            while (lastPacketNum % 9 != 0){ //todo - issue occurs here if no blocks were filled in for this block, but this shouldn't happen
-                interleavedPackets[lastPacketNum % 9] = interleavedPackets[lastPacketNum % 9 - 1];
+            while (lastPacketNum + 1 < 9){ //todo - issue occurs here if no blocks were filled in for this block, but this shouldn't happen
+                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
                 lastPacketNum++;
                 receivedPackets++;
             }
@@ -172,10 +172,11 @@ public class VoipLayer {
             // Process
             process();
             blockNum++;
+            lastPacketNum = 0;
 
             // Add packet to new block
             interleavedPackets[index] = bytes;
-            lastPacketNum++;
+            lastPacketNum = index;
             receivedPackets++;
         }
         // If packet belongs in previous block
@@ -197,7 +198,7 @@ public class VoipLayer {
 
             // Send audio to Audio Layer
             byte[] audio = new byte[512];
-            buffer.get(2, audio);
+            buffer.get(4, audio);
 
             //  Finally output the processed audio block to the speaker
             try {
