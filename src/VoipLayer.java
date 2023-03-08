@@ -34,9 +34,9 @@ public class VoipLayer {
         packetNums = new ArrayList<>();
 
         try {
-            //if(listener)
+            if(listener)
                 player = new AudioPlayer();
-            //else
+            else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -132,7 +132,7 @@ public class VoipLayer {
 
             // Send audio to Audio Layer
             byte[] audio = new byte[512];
-            buffer.get(2, audio);
+            buffer.get(4, audio);
 
             //  Finally output the processed audio block to the speaker
             try {
