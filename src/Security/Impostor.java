@@ -1,31 +1,19 @@
 package Security;
 
-import CMPC3M06.AudioRecorder;
-
-import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
 
 public class Impostor  implements Runnable{
     private final int port;
     private boolean running;
-    private short packetCount;
-    private InetAddress destinationAddress;
+    private final InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
-    private final SecurityLayer securityLayer;
 
-    public Impostor(int portNum, String destAddress, long key) {
+    public Impostor() {
         //  Set port number to argument
-        this.port = portNum;
+        this.port = 55555;
         //  Try and setup client IP from argument
-        try {
-            destinationAddress = InetAddress.getByName(destAddress);
-        } catch (UnknownHostException e) {
-            System.out.println("ERROR: Impostor: Invalid destination address");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        destinationAddress = InetAddress.getLoopbackAddress();
 
         //  Try and create socket for sending from
         try{
@@ -35,8 +23,6 @@ public class Impostor  implements Runnable{
             e.printStackTrace();
             System.exit(0);
         }
-        //  Set up security layer
-        securityLayer = new SecurityLayer(key, true);
     }
 
     public void Start()
@@ -60,29 +46,23 @@ public class Impostor  implements Runnable{
     }
     public void Attack()
     {
-        //  First receive audio block from recorder
-        //  Returns 32 ms (512 byte) audio blocks
+        //  Generate imposter packet
         byte[] message = "Nobody expects the Spanish Inquisition!".getBytes();
+        DatagramPacket packet = new DatagramPacket(message, message.length, destinationAddress, port);
 
-        //  Then process audio block with the VOIP layer (i.e. numbering)
-        ByteBuffer numberedPacket = ByteBuffer.allocate(message.length + 2);
-        packetCount++;
-        short packetNum = packetCount;
-        numberedPacket.putShort(packetNum);
-
-        //  Then pass packet to SecurityLayer to encrypt/authenticate
-        message = securityLayer.EncryptAndSign(message);
-        numberedPacket.put(message);
-
-        //  Finally send the encrypted packet to the other client
-        //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), message.length + 2, destinationAddress, port);
         //Send it
         try {
+            System.out.println("sending faker");
             sendingSocket.send(packet);
         } catch (IOException e) {
             System.out.println("ERROR: Speaker: Some random IO error occurred!");
             e.printStackTrace();
+        }
+        //  Then sleep for a bit
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
     public void Terminate()

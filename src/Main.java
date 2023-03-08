@@ -1,3 +1,4 @@
+import Security.Impostor;
 import Security.KeyExchanger;
 
 import java.io.BufferedReader;
@@ -7,6 +8,8 @@ import java.net.InetAddress;
 
 public class Main {
     public static void main(String[] args) {
+        final boolean TestImpostor = false;
+
         InetAddress destinationAddress;
         int destinationPort = 55555;
         boolean Host, Encrypt = false, Decrypt = false;
@@ -94,6 +97,9 @@ public class Main {
         listener.Start();
         speaker.Start();
 
+        if(TestImpostor)
+            new Impostor().Start();
+        
         //3: Tear down connection
         //  Kill speak and listen threads
         //  ??
