@@ -92,6 +92,7 @@ public class Listener implements Runnable {
         try {
             audio = securityLayer.AuthAndDecrypt(packetBuffer.array());
         } catch (UnableToAuthenticateException e) {
+            System.out.println("Unauthentic packet received, discarding");
             return;
         }
 
