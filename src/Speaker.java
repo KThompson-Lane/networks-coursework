@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 
+import uk.ac.uea.cmp.voip.DatagramSocket2;
+import uk.ac.uea.cmp.voip.DatagramSocket3;
+import uk.ac.uea.cmp.voip.DatagramSocket4;
+
 public class Speaker implements Runnable {
     private static boolean encrypt = true;
     private boolean running;
@@ -17,7 +21,7 @@ public class Speaker implements Runnable {
     private short packetCount;
     private final SecurityLayer securityLayer;
     
-    public Speaker(int portNum, String destAddress, long key) {
+    public Speaker(int portNum, String destAddress, long key, int socketNum) {
         //  Set port number to argument
         this.port = portNum;
         packetCount = 0;
@@ -32,7 +36,25 @@ public class Speaker implements Runnable {
 
         //  Try and create socket for sending from
         try{
-            this.sendingSocket = new DatagramSocket();
+            // Set up Datagram Socket
+            switch(socketNum)
+            {
+                case 1 :
+                    this.sendingSocket = new DatagramSocket();
+                    break;
+                case 2 :
+                    this.sendingSocket = new DatagramSocket2();
+                    break;
+                case 3 :
+                    this.sendingSocket = new DatagramSocket3();
+                    break;
+                case 4 :
+                    this.sendingSocket = new DatagramSocket4();
+                    break;
+                default :
+                    //todo - error
+            }
+
         } catch (SocketException e){
             System.out.println("ERROR: Speaker: Could not open UDP socket to send from.");
             e.printStackTrace();
