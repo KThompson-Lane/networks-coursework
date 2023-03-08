@@ -10,12 +10,12 @@ public class Main {
         InetAddress destinationAddress;
         int destinationPort = 55555;
         boolean Host, Encrypt = false, Decrypt = false;
+        int socketNum = 1;
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
 
         //  Get user to choose whether to run as the host or client
-        //  TODO: Get user to choose to enable encryption or not
         try {
             System.out.println("Please enter 'host' to run as the host device, or 'client' to run as the client device...");
             if (reader.readLine().equalsIgnoreCase("host")) {
@@ -26,26 +26,33 @@ public class Main {
                 Host = false;
             }
 
-            System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both.");
-            switch (reader.readLine().toLowerCase()) {
-                case "1" -> {
-                    System.out.println("Enabling only encryption!");
-                    Encrypt = true;
-                }
-                case "2" -> {
-                    System.out.println("Enabling only decryption!");
-                    Decrypt = true;
-                }
+            System.out.println("Please enter which UDP socket you want to use (1,2,3,4)");
+            switch (reader.readLine()) {
+                case "2" -> socketNum = 2;
+                case "3" -> socketNum = 3;
+                case "4" -> socketNum = 4;
                 default -> {
-                    System.out.println("Enabling encryption and decryption!");
-                    Encrypt = true;
-                    Decrypt = true;
+                    System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both...");
+                    switch (reader.readLine().toLowerCase()) {
+                        case "1" -> {
+                            System.out.println("Enabling only encryption!");
+                            Encrypt = true;
+                        }
+                        case "2" -> {
+                            System.out.println("Enabling only decryption!");
+                            Decrypt = true;
+                        }
+                        default -> {
+                            System.out.println("Enabling encryption and decryption!");
+                            Encrypt = true;
+                            Decrypt = true;
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         //  Get user to enter destination address
         while(true)
         {
@@ -59,9 +66,6 @@ public class Main {
                 System.out.println("Invalid destination address...");
             }
         }
-
-
-
 
         Connector connector = new Connector(destinationPort, destinationAddress.getHostName());
 
@@ -82,9 +86,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number and secret key
-        Listener listener = new Listener(destinationPort, secretKey, Decrypt);
+        Listener listener = new Listener(destinationPort, secretKey, socketNum, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress.getHostName(), secretKey, Encrypt);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress.getHostName(), secretKey, socketNum, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();

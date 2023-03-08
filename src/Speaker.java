@@ -1,24 +1,20 @@
-import CMPC3M06.AudioRecorder;
 import Security.SecurityLayer;
-
-import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
+import uk.ac.uea.cmp.voip.*;
+
 
 public class Speaker implements Runnable {
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
-    private AudioRecorder recorder;
-    private short packetCount;
+    private final VoipLayer voipLayer;
     private final SecurityLayer securityLayer;
 
-    public Speaker(int portNum, String destAddress, long key, final boolean encrypt) {
+    public Speaker(int portNum, String destAddress, long key, int socketNum, boolean encrypt) {
         //  Set port number to argument
         this.port = portNum;
-        packetCount = 0;
         //  Try and setup client IP from argument
         try {
             destinationAddress = InetAddress.getByName(destAddress);
@@ -30,22 +26,32 @@ public class Speaker implements Runnable {
 
         //  Try and create socket for sending from
         try{
-            this.sendingSocket = new DatagramSocket();
+            // Set up Datagram Socket
+            switch(socketNum)
+            {
+                case 1 :
+                    this.sendingSocket = new DatagramSocket();
+                    break;
+                case 2 :
+                    this.sendingSocket = new DatagramSocket2();
+                    break;
+                case 3 :
+                    this.sendingSocket = new DatagramSocket3();
+                    break;
+                case 4 :
+                    this.sendingSocket = new DatagramSocket4();
+                    break;
+                default :
+                    //todo - error
+            }
         } catch (SocketException e){
             System.out.println("ERROR: Speaker: Could not open UDP socket to send from.");
             e.printStackTrace();
             System.exit(0);
         }
-
-        //  Try and create recorder
-        try{
-            recorder = new AudioRecorder();
-        } catch (LineUnavailableException e) {
-            System.out.println("ERROR: Speaker: Could not start audio recorder.");
-            e.printStackTrace();
-            System.exit(0);
-        }
-        //  Set up security layer
+        //  Set up VOIP layer
+        voipLayer = new VoipLayer(false);
+        //  Set up Security layer
         securityLayer = new SecurityLayer(key, encrypt);
     }
 
@@ -70,30 +76,17 @@ public class Speaker implements Runnable {
     }
     public void TransmitPayload()
     {
-        //  First receive audio block from recorder
-        //  Returns 32 ms (512 byte) audio blocks
-        byte[] audioBlock = null;
-        try {
-            audioBlock = recorder.getBlock();
-        } catch (IOException e) {
-            System.out.println("ERROR: Speaker: Some random IO error occurred!");
-            e.printStackTrace();
-            return;
-        }
+        // VOIP LAYER
+        //  First retrieve audio block from the VOIP layer including VOIP header info (512 + 4 bytes)
+        byte[] voipPacket = voipLayer.getVoipBlock();
 
-        //  Then process audio block with the VOIP layer (i.e. numbering)
-        ByteBuffer numberedPacket = ByteBuffer.allocate(518);
-        packetCount++;
-        short packetNum = packetCount;
-        numberedPacket.putShort(packetNum);
+        //  SECURITY LAYER
+        //  Then pass packet to SecurityLayer to encrypt/authenticate to produce our 520 byte (516 + 4 byte header) packet
+        byte[] securePacket = securityLayer.EncryptAndSign(voipPacket);
 
-        //  Then pass packet to SecurityLayer to encrypt/authenticate
-        audioBlock = securityLayer.EncryptAndSign(audioBlock);
-        numberedPacket.put(audioBlock);
-
-        //  Finally send the encrypted packet to the other client
-        //  Make a DatagramPacket with client address and port number
-        DatagramPacket packet = new DatagramPacket(numberedPacket.array(), 518, destinationAddress, port);
+        //  NETWORK/TRANSPORT LAYER
+        //  Finally send the secure packet to the other client
+        DatagramPacket packet = new DatagramPacket(securePacket, securePacket.length, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);
