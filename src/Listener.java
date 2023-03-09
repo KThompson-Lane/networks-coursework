@@ -97,7 +97,7 @@ public class Listener implements Runnable {
         }
         
         //  Then process and play decrypted audio packet with the VOIP layer
-        voipLayer.processNumber(audio); //todo - rename
+        voipLayer.playAudio(audio);
     }
     public void Terminate()
     {

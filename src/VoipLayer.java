@@ -40,9 +40,9 @@ public class VoipLayer {
         interleave = interleaving;
 
         try {
-            if(listener)
+            //if(listener)
                 player = new AudioPlayer();
-            else
+            //else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
