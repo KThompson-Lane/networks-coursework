@@ -40,9 +40,9 @@ public class VoipLayer {
         interleave = interleaving;
 
         try {
-            //if(listener)
+            if(listener)
                 player = new AudioPlayer();
-            //else
+            else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -123,8 +123,15 @@ public class VoipLayer {
 
     public byte[] getVoipBlock() {
         if(!interleave) {
+            //TODO - might want to remove - padding out
+            ByteBuffer paddedPacket = ByteBuffer.allocate(514);
+            short paddedNum = (short) (sentPackets);
+            paddedPacket.putShort(paddedNum);
+            // Gets an audio block and adds it to the packet
+            paddedPacket.put(getAudioBlock());
+
             //Add sequence number
-            ByteBuffer sequencedPacket = ByteBuffer.allocate(514);
+            ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
             short packetNum = (short) (sentPackets);
             sequencedPacket.putShort(packetNum);
             // Gets an audio block and adds it to the packet
@@ -135,7 +142,7 @@ public class VoipLayer {
 //
             //sentPackets++;
             //return packet;
-            return sendToSecurityLayer(sequencedPacket, 514);
+            return sendToSecurityLayer(sequencedPacket, 516);
         }
         //return getInterleavedVoipBlock();
         return sendToSecurityLayer(getInterleavedVoipBlock(), 516);
@@ -183,7 +190,7 @@ public class VoipLayer {
     }
 
     public void process(){ //todo - rename
-        //todo - move to after de-interleaved
+        //todo - move to after de-interleaved - remove from for loop and put in other one - consider this because will want interleaving and compensation separate
         // fill in missed packets
         int good = 0; //todo - rename
         for (int i = 0; i < interleavedPackets.length; i++) {
@@ -234,10 +241,14 @@ public class VoipLayer {
             int packetNum = buffer.getShort(0); //todo - use if needed
             System.out.println("Packet Received: " + packetNum);
 
+            //TODO - might want to remove - padding out
+            //ByteBuffer padding = ByteBuffer.wrap(bytes);
+            int paddingNum = buffer.getShort(2);
+
             //// Get audio
             //byte[] audio = new byte[512];
             //buffer.get(2, audio);
-//
+////
             ////  Finally output the processed audio block to the speaker
             //try {
             //    player.playBlock(audio);
@@ -245,7 +256,7 @@ public class VoipLayer {
             //    System.out.println("ERROR: Listener: Some random IO error occurred!");
             //    e.printStackTrace();
             //}
-            sendToAudioLayer(buffer, 2);
+            sendToAudioLayer(buffer, 4);
         }
         else {
             processNumber(bytes);
