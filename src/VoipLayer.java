@@ -33,7 +33,7 @@ public class VoipLayer {
     private byte[][] outOfOrderBytes = new byte[9][]; //todo - figure out length
     private int outOfOrderCount = 0;
 
-    public VoipLayer(Boolean listener) {
+    public VoipLayer(boolean listener, boolean interleaving) {
         packetNums = new ArrayList<>();
 
         try {
@@ -50,7 +50,7 @@ public class VoipLayer {
     }
 
     //Method for getting a numbered audio block
-    public void receiveFromAudio(int index)
+    public void getNumberedAudioBlock(int index)
     {
         //Receive Audio
         byte[] audioBlock = null;
@@ -61,6 +61,7 @@ public class VoipLayer {
             e.printStackTrace();
             return;
         }
+        //todo - move to method that can be reused in getVoipBlock
         //  Create new packet
         ByteBuffer numberedPacket = ByteBuffer.allocate(514);
         short packetNum = (short) (sentPackets + index);
@@ -80,12 +81,13 @@ public class VoipLayer {
             //  Fill InterleaverBuffer w/ 9 audio blocks
             for(int i = 0; i < 9; i++)
             {
-                receiveFromAudio(i);
+                getNumberedAudioBlock(i);
             }
             //  Interleave all 9 audio blocks
             interleaverBuffer = interleave(interleaverBuffer, 3);
         }
 
+        //todo - add to own method
         //Add post-interleave sequence number
         ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
         short packetNum = (short) (sentPackets);
@@ -100,42 +102,13 @@ public class VoipLayer {
         return audio;
     }
 
-    public void receiveFromSecurity(byte[] bytes) { //todo - rename
-        //Remove post-interleave sequence numbers
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        int packetNum = buffer.getShort(0);
-
-        receivedPackets++;
-        int index = packetNum % 9;
-        // Channel 3
-        if(packetNum / 9 != blockNum) { // Check if packet is part of the current block
-            interleavedPackets[index] = bytes;
-            lastPacketNum++;
-
-            if(receivedPackets % 9 == 0){
-                blockNum++;
-                process();
-            }
-        }
-        else {
-            while ((lastPacketNum + 1) % 9 != 0) // while array isn't full
-            {
-                // repeat last packet
-                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
-                lastPacketNum++;
-                receivedPackets++;
-            }
-            blockNum++;
-            process();
-            interleavedPackets[index] = bytes;
-        }
-    }
-
     public void processNumber(byte[] bytes) {
+        //todo - add to own method
         //Remove post-interleave sequence numbers
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int packetNum = buffer.getShort(0);
 
+        //Add to array to be de-interleaved and send when array is full
         int index = packetNum % 9;
 
         if(packetNum / 9 < blockNum)
@@ -160,6 +133,8 @@ public class VoipLayer {
     }
 
     public void process(){ //todo - rename
+        //todo - move to after de-interleaved
+        // fill in missed packets
         int good = 0;
         for (int i = 0; i < interleavedPackets.length; i++) {
             if(interleavedPackets[i] == null){

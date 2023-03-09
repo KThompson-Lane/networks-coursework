@@ -14,6 +14,7 @@ public class Main {
         int destinationPort = 55555;
         boolean Host, Encrypt = false, Decrypt = false;
         int socketNum = 1;
+        boolean interleaving = false;
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
@@ -53,9 +54,22 @@ public class Main {
                     }
                 }
             }
+
+            // Interleaving
+            System.out.println("Choose one of the following options for interleaving, enter 1 for just interleaving enabled, enter 2 for interleaving disabled");
+            if (reader.readLine().equalsIgnoreCase("1")) {
+                System.out.println("Enabled interleaving!");
+                interleaving = true;
+            } else {
+                System.out.println("Disabled interleaving!");
+                interleaving = false;
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+
+
         //  Get user to enter destination address
         while(true)
         {
@@ -89,9 +103,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number and secret key
-        Listener listener = new Listener(destinationPort, secretKey, socketNum, Decrypt);
+        Listener listener = new Listener(destinationPort, secretKey, socketNum, interleaving, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, Encrypt);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, interleaving, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();
