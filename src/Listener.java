@@ -95,9 +95,9 @@ public class Listener implements Runnable {
             System.out.println("Unauthentic packet received, discarding");
             return;
         }
-
+        
         //  Then process and play decrypted audio packet with the VOIP layer
-        voipLayer.receiveFromSecurity(audio); //todo - rename
+        voipLayer.processNumber(audio); //todo - rename
     }
     public void Terminate()
     {
