@@ -124,14 +124,14 @@ public class VoipLayer {
     public byte[] getVoipBlock() {
         if(!interleave) {
             //TODO - might want to remove - padding out
-            ByteBuffer paddedPacket = ByteBuffer.allocate(514);
+            ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
             short paddedNum = (short) (sentPackets);
-            paddedPacket.putShort(paddedNum);
+            sequencedPacket.putShort(paddedNum);
             // Gets an audio block and adds it to the packet
-            paddedPacket.put(getAudioBlock());
+            //sequencedPacket.put(getAudioBlock());
 
             //Add sequence number
-            ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
+            //ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
             short packetNum = (short) (sentPackets);
             sequencedPacket.putShort(packetNum);
             // Gets an audio block and adds it to the packet
