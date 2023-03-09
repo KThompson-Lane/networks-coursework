@@ -1,33 +1,21 @@
-import CMPC3M06.AudioRecorder;
 import Security.SecurityLayer;
-import Security.SimpleEncryption;
-
-import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
+import uk.ac.uea.cmp.voip.*;
 
-import uk.ac.uea.cmp.voip.DatagramSocket2;
-import uk.ac.uea.cmp.voip.DatagramSocket3;
-import uk.ac.uea.cmp.voip.DatagramSocket4;
 
 public class Speaker implements Runnable {
-    private static boolean encrypt = false;
+    private static final boolean encrypt = false;
     private boolean running;
     private final int port;
     private InetAddress destinationAddress;
     private DatagramSocket sendingSocket;
-    private AudioRecorder recorder;
-    private short packetCount;
-
     private final VoipLayer voipLayer;
-
     private final SecurityLayer securityLayer;
-    
+
     public Speaker(int portNum, String destAddress, long key, int socketNum) {
         //  Set port number to argument
         this.port = portNum;
-        packetCount = 0;
         //  Try and setup client IP from argument
         try {
             destinationAddress = InetAddress.getByName(destAddress);
@@ -57,24 +45,14 @@ public class Speaker implements Runnable {
                 default :
                     //todo - error
             }
-
         } catch (SocketException e){
             System.out.println("ERROR: Speaker: Could not open UDP socket to send from.");
             e.printStackTrace();
             System.exit(0);
         }
-
-        //  Try and create recorder
-        //try{
-        //    recorder = new AudioRecorder();
-        //} catch (LineUnavailableException e) {
-        //    System.out.println("ERROR: Speaker: Could not start audio recorder.");
-        //    e.printStackTrace();
-        //    System.exit(0);
-        //}
-
         //  Set up VOIP layer
         voipLayer = new VoipLayer(false);
+        //  Set up Security layer
         securityLayer = new SecurityLayer(key, encrypt);
     }
 
@@ -100,13 +78,16 @@ public class Speaker implements Runnable {
     public void TransmitPayload()
     {
         // VOIP LAYER
-        //voipLayer.receiveFromAudio(); //todo - rename
-        //DatagramPacket packet = new DatagramPacket(voipLayer.getVoipBlock(), 514, destinationAddress, port);
+        //  First retrieve audio block from the VOIP layer including VOIP header info (512 + 4 bytes)
+        byte[] voipPacket = voipLayer.getVoipBlock();
 
-        // SECURITY LAYER HERE
-        DatagramPacket packet = new DatagramPacket (securityLayer.EncryptAndAuth(voipLayer.getVoipBlock()), 516, destinationAddress, port); //todo - comment this
+        //  SECURITY LAYER
+        //  Then pass packet to SecurityLayer to encrypt/authenticate to produce our 520 byte (516 + 4 byte header) packet
+        byte[] securePacket = securityLayer.EncryptAndSign(voipPacket);
 
-
+        //  NETWORK/TRANSPORT LAYER
+        //  Finally send the secure packet to the other client
+        DatagramPacket packet = new DatagramPacket(securePacket, securePacket.length, destinationAddress, port);
         //Send it
         try {
             sendingSocket.send(packet);
