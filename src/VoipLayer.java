@@ -141,7 +141,6 @@ public class VoipLayer {
     //////// Listener ////////
 
     public void processNumber(byte[] bytes) {
-        //todo - add to own method
         //Remove post-interleave sequence numbers
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int packetNum = buffer.getShort(0);
@@ -173,7 +172,7 @@ public class VoipLayer {
     public void process(){ //todo - rename
         //todo - move to after de-interleaved
         // fill in missed packets
-        int good = 0;
+        int good = 0; //todo - rename
         for (int i = 0; i < interleavedPackets.length; i++) {
             if(interleavedPackets[i] == null){
                 interleavedPackets[i] = interleavedPackets[good];
@@ -214,10 +213,33 @@ public class VoipLayer {
         interleavedPackets[0] = test;
     }
 
+    public void playAudio(byte[] bytes){
+        if(!interleave) {
+            // Remove sequence numbers
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            int packetNum = buffer.getShort(0); //todo - use if needed
+
+            // Get audio
+            byte[] audio = new byte[512];
+            buffer.get(2, audio);
+
+            //  Finally output the processed audio block to the speaker
+            try {
+                player.playBlock(audio);
+            } catch (IOException e) {
+                System.out.println("ERROR: Listener: Some random IO error occurred!");
+                e.printStackTrace();
+            }
+        }
+        else {
+            process();
+        }
+    }
+
 
 
     public static void main(String[] args) {
-        VoipLayer test = new VoipLayer(true);
+        VoipLayer test = new VoipLayer(true, false);
         //for (int i = 0; i < 9; i++) {
         //    //TEST - Ensure interleaver working correctly
         //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
