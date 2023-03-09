@@ -8,40 +8,44 @@ import CMPC3M06.AudioRecorder;
 import javax.sound.sampled.LineUnavailableException;
 
 public class SecurityLayer {
-    private final long secretKey;
+    private final Authenticator authenticator;
     private final boolean enableEncryption;
     public SecurityLayer(long secretKey, boolean enableEncryption) {
-        this.secretKey = secretKey;
         this.enableEncryption = enableEncryption;
+        authenticator = new Authenticator(Long.hashCode(secretKey));
+        SimpleEncryption.GenerateKeys(secretKey);
     }
 
-    public byte[] EncryptAndAuth(byte[] dataPacket)
+    public byte[] EncryptAndSign(byte[] dataPacket)
     {
         byte[] securePacket = dataPacket;
-        //  Authenticate
-            //TODO: Append authentication header
         //  Encrypt
         if(enableEncryption)
-            securePacket = SimpleEncryption.EncryptData(dataPacket, secretKey);
+            securePacket = SimpleEncryption.EncryptData(dataPacket);
+        //  Authenticate
+        securePacket = authenticator.SignPacket(securePacket);
         //  Return secure packet
         return securePacket;
-
     }
-    public byte[] DecryptAndAuth(byte[] encryptedPacket)
-    {
-        byte[] dataPacket = encryptedPacket;
-        //  Authenticate
-            //TODO: Check authentication header
-        //  Decrypt
+
+    public byte[] AuthAndDecrypt(byte[] encryptedPacket) throws UnableToAuthenticateException {
+
+        ByteBuffer EncryptedPacketBuff = ByteBuffer.wrap(encryptedPacket);
+
+        //  Try and authenticate, but do not catch an unable to authenticate exception
+        byte[] authedPacket = authenticator.Authenticate(EncryptedPacketBuff.array());
+
+        //  After authenticating decrypt packet
         if(enableEncryption)
-            dataPacket = SimpleEncryption.DecryptData(dataPacket, secretKey);
+            authedPacket = SimpleEncryption.DecryptData(authedPacket);
 
         //  Return decrypted data packet
-        return dataPacket;
+        return authedPacket;
     }
 
     //Methods for testing the security layer functionality
     public static void main(String[] args) {
+        SimpleEncryption.GenerateKeys(832139);
         TestNumber();
         TestAudio();
     }
@@ -55,10 +59,10 @@ public class SecurityLayer {
         ByteBuffer outputBuff = ByteBuffer.allocate(64);
         
         inputBuff.putLong(input);
-        byte[] cipherText = SimpleEncryption.EncryptData(inputBuff.array(), key);
+        byte[] cipherText = SimpleEncryption.EncryptData(inputBuff.array());
         cipherBuff.put(cipherText);
         long cipherInput = cipherBuff.getLong(0);
-        byte[] plainText = SimpleEncryption.DecryptData(cipherText, key);
+        byte[] plainText = SimpleEncryption.DecryptData(cipherText);
         outputBuff.put(plainText);
         long decryptOutput = outputBuff.getLong(0);
 
@@ -72,7 +76,7 @@ public class SecurityLayer {
         long key = 832139;
         long input = 123456789;
 
-        boolean decrypt = false;
+        boolean decrypt = true;
         AudioRecorder recorder = null;
         AudioPlayer player = null;
         try{
@@ -88,9 +92,9 @@ public class SecurityLayer {
         {
             try {
                 byte[] block = recorder.getBlock();
-                block = SimpleEncryption.EncryptData(block, key);
+                block = SimpleEncryption.EncryptData(block);
                 if(decrypt)
-                    block = SimpleEncryption.DecryptData(block, key);
+                    block = SimpleEncryption.DecryptData(block);
                 player.playBlock(block);
             } catch (IOException e) {
                 throw new RuntimeException(e);

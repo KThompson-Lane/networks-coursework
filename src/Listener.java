@@ -1,26 +1,20 @@
-import CMPC3M06.AudioPlayer;
 import Security.SecurityLayer;
-import Security.SimpleEncryption;
-import uk.ac.uea.cmp.voip.DatagramSocket2;
-import uk.ac.uea.cmp.voip.DatagramSocket3;
-import uk.ac.uea.cmp.voip.DatagramSocket4;
-
-import javax.sound.sampled.LineUnavailableException;
+import Security.UnableToAuthenticateException;
+import uk.ac.uea.cmp.voip.*;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 
 public class Listener implements Runnable {
-    private static boolean decrypt = false;
-    private final int port;
+    //  Calculated in Speaker.java
+    static final int TOTAL_PACKET_SIZE = 520;
+    private static final boolean decrypt = false;
     private boolean running;
     private DatagramSocket receivingSocket;
-    private AudioPlayer player;
     private final SecurityLayer securityLayer;
     private final VoipLayer voipLayer;
-    
+
     public Listener(int portNum, long key, int socketNum) {
-        port = portNum;
 
         //  Set up Receiving Socket
         try{
@@ -28,16 +22,16 @@ public class Listener implements Runnable {
             switch(socketNum)
             {
                 case 1 :
-                    this.receivingSocket = new DatagramSocket(port);
+                    this.receivingSocket = new DatagramSocket(portNum);
                     break;
                 case 2 :
-                    this.receivingSocket = new DatagramSocket2(port);
+                    this.receivingSocket = new DatagramSocket2(portNum);
                     break;
                 case 3 :
-                    this.receivingSocket = new DatagramSocket3(port);
+                    this.receivingSocket = new DatagramSocket3(portNum);
                     break;
                 case 4 :
-                    this.receivingSocket = new DatagramSocket4(port);
+                    this.receivingSocket = new DatagramSocket4(portNum);
                     break;
                 default:
                     //todo - error
@@ -50,16 +44,10 @@ public class Listener implements Runnable {
             e.printStackTrace();
             System.exit(0);
         }
-        //  Set up audio player
-        //try{
-        //    player = new AudioPlayer();
-        //} catch (LineUnavailableException e) {
-        //    System.out.println("ERROR: Listener: Could not start audio player.");
-        //    e.printStackTrace();
-        //    System.exit(0);
-        //}
+
         //  Set up security layer
         securityLayer = new SecurityLayer(key, decrypt);
+        //  Set up VOIP layer
         voipLayer = new VoipLayer(true);
     }
     public void Start()
@@ -85,14 +73,11 @@ public class Listener implements Runnable {
     public void ReceivePayload()
     {
         //  First receive packet on UDP socket
-        ByteBuffer packetBuffer = ByteBuffer.allocate(514);
-        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, 514);
-
-        byte[] audio = new byte[512];
+        ByteBuffer packetBuffer = ByteBuffer.allocate(TOTAL_PACKET_SIZE);
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, TOTAL_PACKET_SIZE);
 
         try {
             receivingSocket.receive(packet);
-
         } catch (SocketTimeoutException e) {
             //  Handle socket timeout
             return;
@@ -102,20 +87,17 @@ public class Listener implements Runnable {
             return;
         }
 
+        byte[] audio;
         //  Then pass packet to SecurityLayer to decrypt/authenticate
-       //audio = voipLayer.receiveFromSecurity(packetBuffer);
-        audio = securityLayer.DecryptAndAuth(audio);
+        try {
+            audio = securityLayer.AuthAndDecrypt(packetBuffer.array());
+        } catch (UnableToAuthenticateException e) {
+            System.out.println("Unauthentic packet received, discarding");
+            return;
+        }
 
-        //  Then process decrypted audio packet with the VOIP layer
-        voipLayer.receiveFromSecurity(packetBuffer.array()); //todo - rename
-
-        //  Finally output the processed audio block to the speaker
-        //try {
-        //    player.playBlock(audio);
-        //} catch (IOException e) {
-        //    System.out.println("ERROR: Listener: Some random IO error occurred!");
-        //    e.printStackTrace();
-        //}
+        //  Then process and play decrypted audio packet with the VOIP layer
+        voipLayer.receiveFromSecurity(audio); //todo - rename
     }
     public void Terminate()
     {
