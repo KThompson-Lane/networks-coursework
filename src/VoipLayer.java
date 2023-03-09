@@ -218,6 +218,7 @@ public class VoipLayer {
             // Remove sequence numbers
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             int packetNum = buffer.getShort(0); //todo - use if needed
+            System.out.println("Packet Received: " + packetNum);
 
             // Get audio
             byte[] audio = new byte[512];
@@ -250,7 +251,7 @@ public class VoipLayer {
 
         for (int i = 0; i < 18; i++) {
             //TEST - Ensure unInterleaver working correctly
-            test.processNumber(test.getInterleavedVoipBlock());
+            test.playAudio(test.getVoipBlock());
         }
     }
 
