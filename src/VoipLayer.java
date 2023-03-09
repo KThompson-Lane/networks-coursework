@@ -5,6 +5,7 @@ import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class VoipLayer {
@@ -21,12 +22,14 @@ public class VoipLayer {
     private List<Integer> packetNums;
     private int receivedPackets = 0; //counts number of packets to be de-interleaved
 
+    private int blockNum = 0;
+
 
     //For interleaving/de-interleaving
     private byte[][] interleavedPackets = new byte[9][];
     private byte[][] unInterleavedPackets = new byte[9][];
 
-    private int lastPacketNum = -1;
+    private int lastPacketNum = 0;
     private byte[][] outOfOrderBytes = new byte[9][]; //todo - figure out length
     private int outOfOrderCount = 0;
 
@@ -101,25 +104,72 @@ public class VoipLayer {
         //Remove post-interleave sequence numbers
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         int packetNum = buffer.getShort(0);
-        //System.out.println("Packet Received: " + packetNum);
-        
+
         receivedPackets++;
         int index = packetNum % 9;
-        if(index < 9) {
+        // Channel 3
+        if(packetNum / 9 != blockNum) { // Check if packet is part of the current block
             interleavedPackets[index] = bytes;
+            lastPacketNum++;
 
             if(receivedPackets % 9 == 0){
+                blockNum++;
                 process();
             }
         }
         else {
-            //todo - compensate for lost packets
+            while ((lastPacketNum + 1) % 9 != 0) // while array isn't full
+            {
+                // repeat last packet
+                interleavedPackets[lastPacketNum + 1] = interleavedPackets[lastPacketNum];
+                lastPacketNum++;
+                receivedPackets++;
+            }
+            blockNum++;
             process();
             interleavedPackets[index] = bytes;
         }
     }
 
+    public void processNumber(byte[] bytes) {
+        //Remove post-interleave sequence numbers
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        int packetNum = buffer.getShort(0);
+
+        int index = packetNum % 9;
+
+        if(packetNum / 9 < blockNum)
+        {
+            //do nothing
+            return;
+        }
+        // If packet belongs in next block
+        else if(packetNum / 9 > blockNum) {
+            // Process
+            process();
+            blockNum++;
+
+            // Add packet to new block
+            interleavedPackets[index] = bytes;
+        }
+        // If packet belongs in current block
+        else {
+            // Add to array
+            interleavedPackets[index] = bytes;
+        }
+    }
+
     public void process(){ //todo - rename
+        int good = 0;
+        for (int i = 0; i < interleavedPackets.length; i++) {
+            if(interleavedPackets[i] == null){
+                interleavedPackets[i] = interleavedPackets[good];
+            }
+            else {
+                good = i;
+            }
+        }
+
         //Un-interleave
         unInterleavedPackets = (unInterleave(interleavedPackets, 3));
 
@@ -142,6 +192,13 @@ public class VoipLayer {
                 e.printStackTrace();
             }
         }
+
+        for (int i = 1; i < interleavedPackets.length; i++) {
+            interleavedPackets[i] = null;
+        }
+        byte[] test = new byte[516];
+        Arrays.fill(test, (byte)0);
+        interleavedPackets[0] = test;
     }
 
 
@@ -158,7 +215,7 @@ public class VoipLayer {
 
         for (int i = 0; i < 18; i++) {
             //TEST - Ensure unInterleaver working correctly
-            test.receiveFromSecurity(test.getVoipBlock());
+            test.processNumber(test.getVoipBlock());
         }
     }
 
