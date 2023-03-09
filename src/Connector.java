@@ -3,24 +3,18 @@ import java.net.*;
 import java.util.Arrays;
 
 public class Connector {
-    private InetAddress clientIP;
-    private int port;
+    private final InetAddress clientIP;
+    private final int port;
     private DatagramSocket sendingSocket;
 
     private DatagramSocket receivingSocket;
 
 
-    public Connector(int portNum, String ipAddr) {
+    public Connector(int portNum, InetAddress ipAddr) {
         port = portNum;
         //Set up Sending Socket
-        //  Try and setup client IP from argument
-        try {
-            clientIP = InetAddress.getByName(ipAddr);
-        } catch (UnknownHostException e) {
-            System.out.println("ERROR: SecureSender: Could not find client IP");
-            e.printStackTrace();
-            System.exit(0);
-        }
+        //  Setup client IP from argument
+        clientIP = ipAddr;
 
         //  Try and create socket for sending from
         try{

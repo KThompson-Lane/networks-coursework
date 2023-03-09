@@ -1,3 +1,4 @@
+import CMPC3M06.AudioPlayer;
 import Security.SecurityLayer;
 import Security.UnableToAuthenticateException;
 import uk.ac.uea.cmp.voip.*;
@@ -8,13 +9,12 @@ import java.nio.ByteBuffer;
 public class Listener implements Runnable {
     //  Calculated in Speaker.java
     static final int TOTAL_PACKET_SIZE = 520;
-    private static final boolean decrypt = false;
     private boolean running;
     private DatagramSocket receivingSocket;
     private final SecurityLayer securityLayer;
     private final VoipLayer voipLayer;
 
-    public Listener(int portNum, long key, int socketNum) {
+    public Listener(int portNum, long key, int socketNum, boolean decrypt) {
 
         //  Set up Receiving Socket
         try{
