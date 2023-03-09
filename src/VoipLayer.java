@@ -89,7 +89,7 @@ public class VoipLayer {
     }
 
     //Method for getting interleaved voip block
-    public byte[] getInterleavedVoipBlock() {
+    public ByteBuffer getInterleavedVoipBlock() {
         //packetIndex ranges from 0-8
         short packetIndex = (short) (sentPackets % 9);
 
@@ -112,12 +112,13 @@ public class VoipLayer {
         sequencedPacket.putShort(packetNum);
         sequencedPacket.put(interleaverBuffer[packetIndex]);
 
-        byte[] audio = new byte[516];
-        sequencedPacket.get(0, audio);
-
-        //Return audio block at position packetIndex
-        sentPackets++;
-        return audio;
+        //byte[] audio = new byte[516];
+        //sequencedPacket.get(0, audio);
+//
+        ////Return audio block at position packetIndex
+        //sentPackets++;
+        //return audio;
+        return sequencedPacket;
     }
 
     public byte[] getVoipBlock() {
@@ -129,13 +130,23 @@ public class VoipLayer {
             // Gets an audio block and adds it to the packet
             sequencedPacket.put(getAudioBlock());
 
-            byte[] packet = new byte[514];
-            sequencedPacket.get(0, packet);
-
-            sentPackets++;
-            return packet;
+            //byte[] packet = new byte[514];
+            //sequencedPacket.get(0, packet);
+//
+            //sentPackets++;
+            //return packet;
+            return sendToSecurityLayer(sequencedPacket, 514);
         }
-        return getInterleavedVoipBlock();
+        //return getInterleavedVoipBlock();
+        return sendToSecurityLayer(getInterleavedVoipBlock(), 516);
+    }
+
+    public byte[] sendToSecurityLayer(ByteBuffer bytes, int byteLength){ //todo - rename
+        byte[] packet = new byte[byteLength];
+        bytes.get(0, packet);
+
+        sentPackets++;
+        return packet;
     }
 
     //////// Listener ////////
@@ -148,9 +159,10 @@ public class VoipLayer {
         //Add to array to be de-interleaved and send when array is full
         int index = packetNum % 9;
 
+        // If packet belongs in previous block
         if(packetNum / 9 < blockNum)
         {
-            //do nothing
+            // Discard packet
             return;
         }
         // If packet belongs in next block
@@ -166,6 +178,7 @@ public class VoipLayer {
         else {
             // Add to array
             interleavedPackets[index] = bytes;
+            //todo - issue here! We don't play the last set of interleaved packets as we won't get a packet from the next block - probably not that much of an issue
         }
     }
 
@@ -192,17 +205,18 @@ public class VoipLayer {
             int packetNum = buffer.getShort(2);
             System.out.println("Packet Received: " + packetNum);
 
-            // Send audio to Audio Layer
-            byte[] audio = new byte[512];
-            buffer.get(4, audio);
-
-            //  Finally output the processed audio block to the speaker
-            try {
-                player.playBlock(audio);
-            } catch (IOException e) {
-                System.out.println("ERROR: Listener: Some random IO error occurred!");
-                e.printStackTrace();
-            }
+            //// Send audio to Audio Layer
+            //byte[] audio = new byte[512];
+            //buffer.get(4, audio);
+//
+            ////  Finally output the processed audio block to the speaker
+            //try {
+            //    player.playBlock(audio);
+            //} catch (IOException e) {
+            //    System.out.println("ERROR: Listener: Some random IO error occurred!");
+            //    e.printStackTrace();
+            //}
+            sendToAudioLayer(buffer, 4);
         }
 
         for (int i = 1; i < interleavedPackets.length; i++) {
@@ -220,20 +234,35 @@ public class VoipLayer {
             int packetNum = buffer.getShort(0); //todo - use if needed
             System.out.println("Packet Received: " + packetNum);
 
-            // Get audio
-            byte[] audio = new byte[512];
-            buffer.get(2, audio);
-
-            //  Finally output the processed audio block to the speaker
-            try {
-                player.playBlock(audio);
-            } catch (IOException e) {
-                System.out.println("ERROR: Listener: Some random IO error occurred!");
-                e.printStackTrace();
-            }
+            //// Get audio
+            //byte[] audio = new byte[512];
+            //buffer.get(2, audio);
+//
+            ////  Finally output the processed audio block to the speaker
+            //try {
+            //    player.playBlock(audio);
+            //} catch (IOException e) {
+            //    System.out.println("ERROR: Listener: Some random IO error occurred!");
+            //    e.printStackTrace();
+            //}
+            sendToAudioLayer(buffer, 2);
         }
         else {
-            process();
+            processNumber(bytes);
+        }
+    }
+
+    public void sendToAudioLayer(ByteBuffer buffer, int index){
+        // Get audio
+        byte[] audio = new byte[512];
+        buffer.get(index, audio);
+
+        //  Finally output the processed audio block to the speaker
+        try {
+            player.playBlock(audio);
+        } catch (IOException e) {
+            System.out.println("ERROR: Listener: Some random IO error occurred!");
+            e.printStackTrace();
         }
     }
 
