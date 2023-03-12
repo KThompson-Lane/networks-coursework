@@ -4,9 +4,7 @@ import CMPC3M06.AudioRecorder;
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class VoipLayer {
 
@@ -19,6 +17,12 @@ public class VoipLayer {
 
     boolean interleave;
 
+    //compensation without interleaving
+    int lastPacketNum = 0;
+    byte[] lastPacket;
+
+    boolean compensate;
+
 
     //For processing from security layer
     private int blockNum = 0;
@@ -28,8 +32,9 @@ public class VoipLayer {
     private byte[][] interleavedPackets = new byte[9][];
     private byte[][] unInterleavedPackets = new byte[9][];
 
-    public VoipLayer(boolean listener, boolean interleaving) {
+    public VoipLayer(boolean listener, boolean interleaving, boolean compensation) {
         interleave = interleaving;
+        compensate = compensation;
 
         try {
             if(listener)
@@ -194,10 +199,19 @@ public class VoipLayer {
 
     public void playAudio(byte[] bytes){
         if(!interleave) {
+            // todo - only do this if we need to print the numbers out in the demo oe using compensation
             // Remove sequence numbers
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             int packetNum = buffer.getShort(0); //todo - use if needed
             System.out.println("Packet Received: " + packetNum);
+
+            //if compensation required
+            if(compensate) {
+                if (packetNum != lastPacketNum + 1) {
+                    //repeat last packet
+                    sendToAudioLayer(ByteBuffer.wrap(lastPacket), 4);
+                }
+            }
 
             sendToAudioLayer(buffer, 4);
         }
@@ -223,7 +237,7 @@ public class VoipLayer {
 
 
     public static void main(String[] args) {
-        VoipLayer test = new VoipLayer(true, false);
+        VoipLayer test = new VoipLayer(true, false, false);
         //for (int i = 0; i < 9; i++) {
         //    //TEST - Ensure interleaver working correctly
         //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
