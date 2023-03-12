@@ -40,9 +40,9 @@ public class VoipLayer {
         interleave = interleaving;
 
         try {
-            //if(listener)
+            if(listener)
                 player = new AudioPlayer();
-            //else
+            else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -196,19 +196,30 @@ public class VoipLayer {
 
         //todo - remove from for loop and put in other one - consider this because will want interleaving and compensation separate
         // fill in missed packets
-        int lastFilledIndex = 0; //todo - rename
-        for (int i = 0; i < unInterleavedPackets.length; i++) {
-            if(unInterleavedPackets[i] == null){
-                unInterleavedPackets[i] = unInterleavedPackets[lastFilledIndex];
-            }
-            else {
-                lastFilledIndex = i;
-            }
-        }
+        //int lastFilledIndex = 0; //todo - rename
+        //for (int i = 0; i < unInterleavedPackets.length; i++) {
+        //    if(unInterleavedPackets[i] == null){
+        //        unInterleavedPackets[i] = unInterleavedPackets[lastFilledIndex];
+        //    }
+        //    else {
+        //        lastFilledIndex = i;
+        //    }
+        //}
 
         // Remove numbered header
+        byte[] lastFilled = null;
         for (int i = 0; i < 9; i++) {
             byte[] bytes = unInterleavedPackets[i];
+            //if null - if yes set to last good if not null, otherwise return
+            if(bytes == null) {
+                if(lastFilled == null){
+                    continue;
+                }
+                else{
+                    bytes = lastFilled;
+                }
+            }
+            lastFilled = bytes;
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             int packetNum = buffer.getShort(2);
             System.out.println("Packet Received: " + packetNum);
@@ -228,12 +239,10 @@ public class VoipLayer {
         }
 
         // reset array to null, ready to be refilled
-        for (int i = 1; i < interleavedPackets.length; i++) {
-            interleavedPackets[i] = null;
-        }
-        byte[] test = new byte[516];
-        Arrays.fill(test, (byte)0);
-        interleavedPackets[0] = test;
+        Arrays.fill(interleavedPackets, null);
+        //byte[] test = new byte[516];
+        //Arrays.fill(test, (byte)0);
+        //interleavedPackets[0] = test;
     }
 
     public void playAudio(byte[] bytes){
