@@ -209,7 +209,9 @@ public class VoipLayer {
             if(compensate) {
                 if (packetNum != lastPacketNum + 1) {
                     //repeat last packet
-                    sendToAudioLayer(ByteBuffer.wrap(lastPacket), 4);
+                    if(lastPacket != null) {
+                        sendToAudioLayer(ByteBuffer.wrap(lastPacket), 4);
+                    }
                 }
             }
 
