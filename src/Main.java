@@ -14,6 +14,8 @@ public class Main {
         int destinationPort = 55555;
         boolean Host, Encrypt = false, Decrypt = false;
         int socketNum = 1;
+        boolean interleaving = false;
+        boolean compensate = false;
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
@@ -31,9 +33,18 @@ public class Main {
 
             System.out.println("Please enter which UDP socket you want to use (1,2,3,4)");
             switch (reader.readLine()) {
-                case "2" -> socketNum = 2;
-                case "3" -> socketNum = 3;
-                case "4" -> socketNum = 4;
+                case "2" -> {
+                    socketNum = 2;
+                    interleaving = true;
+                }
+                case "3" -> {
+                    socketNum = 3;
+                    interleaving = true;
+                }
+                case "4" -> {
+                    socketNum = 4;
+                    compensate = true;
+                }
                 default -> {
                     System.out.println("Choose one of the following options for encryption, enter 1 for just encryption, enter 2 for just decryption, or 3 for both...");
                     switch (reader.readLine().toLowerCase()) {
@@ -53,9 +64,22 @@ public class Main {
                     }
                 }
             }
+
+            // Interleaving
+            //System.out.println("Choose one of the following options for interleaving, enter 1 for just interleaving enabled, enter 2 for interleaving disabled");
+            //if (reader.readLine().equalsIgnoreCase("1")) {
+            //    System.out.println("Enabled interleaving!");
+            //    interleaving = true;
+            //} else {
+            //    System.out.println("Disabled interleaving!");
+            //    interleaving = false;
+            //}
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+
+
         //  Get user to enter destination address
         while(true)
         {
@@ -89,9 +113,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number and secret key
-        Listener listener = new Listener(destinationPort, secretKey, socketNum, Decrypt);
+        Listener listener = new Listener(destinationPort, secretKey, socketNum, interleaving, compensate, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, Encrypt);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, interleaving, compensate, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();
