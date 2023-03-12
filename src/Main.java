@@ -14,7 +14,9 @@ public class Main {
         int destinationPort = 55555;
         boolean Host, Encrypt = false, Decrypt = false;
         int socketNum = 1;
+        //  Interleaving & compensation
         boolean interleaving = false;
+        //  Just compensation
         boolean compensate = false;
 
         BufferedReader reader = new BufferedReader(

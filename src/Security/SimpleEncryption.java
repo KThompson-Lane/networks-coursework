@@ -44,7 +44,8 @@ public class SimpleEncryption {
     public static void GenerateKeys(final long inputKey)
     {
         //  Take our master key and use the first 10 bits to generate our keys
-        String input = new StringBuilder(Long.toBinaryString(inputKey)).substring(0,10);
+        int hashedKey = Long.hashCode(inputKey);
+        String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
         String key;
 
         //  First we permute our 10 bit input key using FKP
