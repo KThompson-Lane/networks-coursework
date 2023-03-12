@@ -40,9 +40,9 @@ public class VoipLayer {
         interleave = interleaving;
 
         try {
-            if(listener)
+            //if(listener)
                 player = new AudioPlayer();
-            else
+            //else
                 recorder = new AudioRecorder();
 
         } catch (LineUnavailableException e) {
@@ -190,20 +190,21 @@ public class VoipLayer {
     }
 
     public void process(){ //todo - rename
-        //todo - move to after de-interleaved - remove from for loop and put in other one - consider this because will want interleaving and compensation separate
-        // fill in missed packets
-        int good = 0; //todo - rename
-        for (int i = 0; i < interleavedPackets.length; i++) {
-            if(interleavedPackets[i] == null){
-                interleavedPackets[i] = interleavedPackets[good];
-            }
-            else {
-                good = i;
-            }
-        }
 
         //Un-interleave
         unInterleavedPackets = (unInterleave(interleavedPackets, 3));
+
+        //todo - remove from for loop and put in other one - consider this because will want interleaving and compensation separate
+        // fill in missed packets
+        int lastFilledIndex = 0; //todo - rename
+        for (int i = 0; i < unInterleavedPackets.length; i++) {
+            if(unInterleavedPackets[i] == null){
+                unInterleavedPackets[i] = unInterleavedPackets[lastFilledIndex];
+            }
+            else {
+                lastFilledIndex = i;
+            }
+        }
 
         // Remove numbered header
         for (int i = 0; i < 9; i++) {
@@ -226,6 +227,7 @@ public class VoipLayer {
             sendToAudioLayer(buffer, 4);
         }
 
+        // reset array to null, ready to be refilled
         for (int i = 1; i < interleavedPackets.length; i++) {
             interleavedPackets[i] = null;
         }
