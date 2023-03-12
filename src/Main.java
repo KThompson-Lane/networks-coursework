@@ -64,21 +64,9 @@ public class Main {
                     }
                 }
             }
-
-            // Interleaving
-            //System.out.println("Choose one of the following options for interleaving, enter 1 for just interleaving enabled, enter 2 for interleaving disabled");
-            //if (reader.readLine().equalsIgnoreCase("1")) {
-            //    System.out.println("Enabled interleaving!");
-            //    interleaving = true;
-            //} else {
-            //    System.out.println("Disabled interleaving!");
-            //    interleaving = false;
-            //}
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-
 
         //  Get user to enter destination address
         while(true)
@@ -102,7 +90,6 @@ public class Main {
         else
             connector.ConnectAsClient();
 
-        //  TODO: Consider merging connector and KeyExchanger class
         //  After establishing connection, determine shared secret key
         KeyExchanger keyExchanger = new KeyExchanger(destinationPort, destinationAddress);
         long secretKey;

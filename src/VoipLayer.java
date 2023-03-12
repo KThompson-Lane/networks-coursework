@@ -114,7 +114,7 @@ public class VoipLayer {
 
     public byte[] getVoipBlock() {
         if(!interleave) {
-            //TODO - might want to remove - padding out
+            //  Padding required for consistent packet size
             ByteBuffer sequencedPacket = ByteBuffer.allocate(516);
             short paddedNum = sentPackets;
             sequencedPacket.putShort(paddedNum);
@@ -214,7 +214,8 @@ public class VoipLayer {
                     }
                 }
             }
-
+            lastPacketNum = packetNum;
+            lastPacket = buffer.array();
             sendToAudioLayer(buffer, 4);
         }
         else {
