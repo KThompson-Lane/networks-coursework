@@ -7,9 +7,7 @@ public class SimpleEncryption {
 
     private static final int[] FKP = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 };
     private static final int[] SKP = { 6, 3, 7, 4, 8, 5, 10, 9 };
-
-    private static String FirstKey;
-    private static String SecondKey;
+    private static String[] Keys;
 
     private static final int[] InitialPermutation = { 2, 6, 3, 1, 4, 8, 5, 7 };
     private static final int[] ExpansionPermutation = { 4, 1, 2, 3, 2, 3, 4, 1 };
@@ -43,25 +41,24 @@ public class SimpleEncryption {
     //  Generate keys using permutation tables FKP and SKP and bit-shifts
     public static void GenerateKeys(final long inputKey)
     {
-        //  Take our master key and use the first 10 bits to generate our keys
-        int hashedKey = Long.hashCode(inputKey);
-        String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
-        String key;
+        //  Take our master key and use the first 20 bits to generate our 4 keys
+        StringBuilder paddedKey = new StringBuilder(Long.toBinaryString(inputKey));
 
-        //  First we permute our 10 bit input key using FKP
-        String masterKey = Permute(input, FKP);
-
-        //  We then begin building our key by left shifting each half by one
-        key = LeftShift(masterKey.substring(0,5), 1) + LeftShift(masterKey.substring(5), 1);
-
-        //  Our first key is given by permuting using the SKP
-        FirstKey = Permute(key, SKP);
-
-        //  We then left shift our key again by 2
-        key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
-
-        //  Our second key is again given by permuting using the SKP
-        SecondKey = Permute(key, SKP);
+        //  Append zeroes
+        while (paddedKey.length() < 20) {
+            paddedKey.append("0");
+        }
+        String fullKey = paddedKey.toString();
+        Keys = new String[4];
+        for(int i = 0; i < 2; i++)
+        {
+            String key = fullKey.substring(i*10, (i+1)*10);
+            key = Permute(key, FKP);
+            key = LeftShift(key.substring(0,5), 1) + LeftShift(key.substring(5), 1);
+            Keys[i] = Permute(key, SKP);
+            key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
+            Keys[i + 2] = Permute(key, SKP);
+        }
     }
 
     //  Helper function that converts an integer to a padded binary string
@@ -139,14 +136,16 @@ public class SimpleEncryption {
         //  Initial permutation
         String data = Permute(segment, InitialPermutation);
 
-        //  First key round
-        data = Round(data, FirstKey);
+        for (int round = 0; round < 3; round++)
+        {
+            //  Do N key round
+            data = Round(data, Keys[round]);
+            //  Swap left and right halves
+            data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+        }
 
-        //  Swapping left and right halves
-        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
-
-        //  Second key round
-        data = Round(data, SecondKey);
+        //  Do final round
+        data = Round(data, Keys[3]);
 
         //  Inverse initial permutation
         return Permute(data, InverseInitialPermutation);
@@ -158,14 +157,17 @@ public class SimpleEncryption {
         //  Initial permutation
         String data = Permute(segment, InitialPermutation);
 
-        //  Second key round
-        data = Round(data, SecondKey);
+        for (int round = 3; round > 0; round--)
+        {
+            //  Do N key round
+            data = Round(data, Keys[round]);
 
-        //  Swapping left and right halves
-        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+            //  Swap left and right halves
+            data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+        }
 
-        //  First key round
-        data = Round(data, FirstKey);
+        //  Do final round
+        data = Round(data, Keys[0]);
 
         //  Inverse initial permutation
         return Permute(data, InverseInitialPermutation);
