@@ -7,6 +7,7 @@ public class SimpleEncryption {
 
     private static final int[] FKP = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 };
     private static final int[] SKP = { 6, 3, 7, 4, 8, 5, 10, 9 };
+    private static String[] Keys;
 
     private static String FirstKey;
     private static String SecondKey;
@@ -45,7 +46,14 @@ public class SimpleEncryption {
     {
         //  Take our master key and use the first 10 bits to generate our keys
         int hashedKey = Long.hashCode(inputKey);
-        String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
+        String fullKey = ToPaddedBinaryString(hashedKey, 32);
+        Keys = new String[4];
+        for(int i = 0; i < 4; i++)
+        {
+            Keys[i] = fullKey.substring(i, (i+1)*8);
+        }
+
+        /*String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
         String key;
 
         //  First we permute our 10 bit input key using FKP
@@ -61,7 +69,7 @@ public class SimpleEncryption {
         key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
 
         //  Our second key is again given by permuting using the SKP
-        SecondKey = Permute(key, SKP);
+        SecondKey = Permute(key, SKP);*/
     }
 
     //  Helper function that converts an integer to a padded binary string
@@ -139,14 +147,17 @@ public class SimpleEncryption {
         //  Initial permutation
         String data = Permute(segment, InitialPermutation);
 
-        //  First key round
-        data = Round(data, FirstKey);
+        for (int round = 0; round < 3; round++)
+        {
+            //  Do N key round
+            data = Round(data, Keys[round]);
 
-        //  Swapping left and right halves
-        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+            //  Swap left and right halves
+            data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+        }
 
-        //  Second key round
-        data = Round(data, SecondKey);
+        //  Do final round
+        data = Round(data, Keys[3]);
 
         //  Inverse initial permutation
         return Permute(data, InverseInitialPermutation);
@@ -158,14 +169,17 @@ public class SimpleEncryption {
         //  Initial permutation
         String data = Permute(segment, InitialPermutation);
 
-        //  Second key round
-        data = Round(data, SecondKey);
+        for (int round = 3; round > 0; round--)
+        {
+            //  Do N key round
+            data = Round(data, Keys[round]);
 
-        //  Swapping left and right halves
-        data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+            //  Swap left and right halves
+            data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
+        }
 
-        //  First key round
-        data = Round(data, FirstKey);
+        //  Do final round
+        data = Round(data, Keys[0]);
 
         //  Inverse initial permutation
         return Permute(data, InverseInitialPermutation);
