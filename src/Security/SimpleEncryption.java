@@ -46,34 +46,12 @@ public class SimpleEncryption {
     {
         //  Take our master key and use the first 10 bits to generate our keys
         int hashedKey = Long.hashCode(inputKey);
-        String fullKey = ToPaddedBinaryString(hashedKey, 40);
+        String fullKey = ToPaddedBinaryString(hashedKey, 32);
         Keys = new String[4];
         for(int i = 0; i < 4; i++)
         {
-            String key = fullKey.substring(i*10, (i+1)*10);
-            key = Permute(key, FKP);
-            key = LeftShift(key.substring(0,5), i) + LeftShift(key.substring(5), i);
-            key = Permute(key, SKP);
-            Keys[i] = key;
+            Keys[i] = fullKey.substring(i*8, (i+1)*8);
         }
-
-        /*String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
-        String key;
-
-        //  First we permute our 10 bit input key using FKP
-        String masterKey = Permute(input, FKP);
-
-        //  We then begin building our key by left shifting each half by one
-        key = LeftShift(masterKey.substring(0,5), 1) + LeftShift(masterKey.substring(5), 1);
-
-        //  Our first key is given by permuting using the SKP
-        FirstKey = Permute(key, SKP);
-
-        //  We then left shift our key again by 2
-        key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
-
-        //  Our second key is again given by permuting using the SKP
-        SecondKey = Permute(key, SKP);*/
     }
 
     //  Helper function that converts an integer to a padded binary string
