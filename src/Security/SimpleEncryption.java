@@ -59,7 +59,6 @@ public class SimpleEncryption {
             key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
             Keys[i + 2] = Permute(key, SKP);
         }
-        System.out.println("test");
     }
 
     //  Helper function that converts an integer to a padded binary string
