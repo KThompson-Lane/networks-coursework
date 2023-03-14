@@ -42,8 +42,13 @@ public class SimpleEncryption {
     public static void GenerateKeys(final long inputKey)
     {
         //  Take our master key and use the first 20 bits to generate our 4 keys
-        int hashedKey = Long.hashCode(inputKey);
-        String fullKey = ToPaddedBinaryString(hashedKey, 20);
+        StringBuilder paddedKey = new StringBuilder(Long.toBinaryString(inputKey));
+
+        //  Append zeroes
+        while (paddedKey.length() < 20) {
+            paddedKey.append("0");
+        }
+        String fullKey = paddedKey.toString();
         Keys = new String[4];
         for(int i = 0; i < 2; i++)
         {
@@ -52,8 +57,9 @@ public class SimpleEncryption {
             key = LeftShift(key.substring(0,5), 1) + LeftShift(key.substring(5), 1);
             Keys[i] = Permute(key, SKP);
             key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
-            Keys[i+2] = Permute(key, SKP);
+            Keys[i + 2] = Permute(key, SKP);
         }
+        System.out.println("test");
     }
 
     //  Helper function that converts an integer to a padded binary string

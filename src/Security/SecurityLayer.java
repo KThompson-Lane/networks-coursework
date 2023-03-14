@@ -76,7 +76,7 @@ public class SecurityLayer {
         long key = 832139;
         long input = 123456789;
 
-        boolean decrypt = true;
+        boolean decrypt = false;
         AudioRecorder recorder = null;
         AudioPlayer player = null;
         try{
