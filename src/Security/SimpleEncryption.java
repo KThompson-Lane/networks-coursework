@@ -50,7 +50,7 @@ public class SimpleEncryption {
         Keys = new String[4];
         for(int i = 0; i < 4; i++)
         {
-            Keys[i] = fullKey.substring(i, (i+1)*8);
+            Keys[i] = fullKey.substring(i*8, (i+1)*8);
         }
 
         /*String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
