@@ -46,11 +46,15 @@ public class SimpleEncryption {
     {
         //  Take our master key and use the first 10 bits to generate our keys
         int hashedKey = Long.hashCode(inputKey);
-        String fullKey = ToPaddedBinaryString(hashedKey, 32);
+        String fullKey = ToPaddedBinaryString(hashedKey, 40);
         Keys = new String[4];
         for(int i = 0; i < 4; i++)
         {
-            Keys[i] = fullKey.substring(i*8, (i+1)*8);
+            String key = fullKey.substring(i*10, (i+1)*10);
+            key = Permute(key, FKP);
+            key = LeftShift(key.substring(0,5), i) + LeftShift(key.substring(5), i);
+            key = Permute(key, SKP);
+            Keys[i] = key;
         }
 
         /*String input = new StringBuilder(Integer.toBinaryString(hashedKey)).substring(0,10);
