@@ -12,10 +12,11 @@ public class VoipLayer {
     private AudioPlayer player;
 
     //Global variables for interleaving
-    short sentPackets = 0;
-    byte[][] interleaverBuffer = new byte[9][];
-
     boolean interleave;
+    int interleaverDepth, interleaverSize;
+    short sentPackets = 0;
+    byte[][] interleaverBuffer;
+
 
     //compensation without interleaving
     int lastPacketNum = 0;
@@ -29,12 +30,24 @@ public class VoipLayer {
 
 
     //For interleaving/de-interleaving
-    private byte[][] interleavedPackets = new byte[9][];
-    private byte[][] unInterleavedPackets = new byte[9][];
+    private byte[][] interleavedPackets;
+    private byte[][] unInterleavedPackets;
 
-    public VoipLayer(boolean listener, boolean interleaving, boolean compensation) {
-        interleave = interleaving;
+    public VoipLayer(boolean listener, int interleaverDepth, boolean compensation) {
+        if(interleaverDepth > 1)
+        {
+            interleave = true;
+            this.interleaverDepth = interleaverDepth;
+            this.interleaverSize = interleaverDepth * interleaverDepth;
+        }
+        else
+            interleave = false;
         compensate = compensation;
+
+        //  Initialize arrays
+        interleavedPackets = new byte[interleaverSize][];
+        unInterleavedPackets = new byte[interleaverSize][];
+        interleaverBuffer = new byte[interleaverSize][];
 
         try {
             if(listener)
@@ -88,19 +101,19 @@ public class VoipLayer {
     //Method for getting interleaved voip block
     public ByteBuffer getInterleavedVoipBlock() {
         //packetIndex ranges from 0-8
-        short packetIndex = (short) (sentPackets % 9);
+        short packetIndex = (short) (sentPackets % interleaverSize);
 
-        //If we get to 9 sent packets, refill buffer and interleave
+        // Check if we need to refill the buffer and interleave
         if(packetIndex == 0)
         {
-            //  Fill InterleaverBuffer w/ 9 audio byte[]
+            //  Fill InterleaverBuffer w/ audio byte[]
 
-            for(int i = 0; i < 9; i++)
+            for(int i = 0; i < interleaverSize; i++)
             {
                 getNumberedAudioBlock(i);
             }
-            //  Interleave all 9 audio byte[]
-            interleaverBuffer = interleave(interleaverBuffer, 3);
+            //  Interleave all audio byte[]
+            interleaverBuffer = interleave(interleaverBuffer, interleaverDepth);
         }
 
         //Add post-interleave sequence number
@@ -146,14 +159,14 @@ public class VoipLayer {
         int packetNum = buffer.getShort(0);
 
         //Add to array to be de-interleaved and send when array is full
-        int index = packetNum % 9;
+        int index = packetNum % interleaverSize;
 
         // If packet belongs in previous block
-        if(packetNum / 9 < blockNum) {
+        if(packetNum / interleaverSize < blockNum) {
             // Discard packet
         }
         // If packet belongs in next block
-        else if(packetNum / 9 > blockNum) {
+        else if(packetNum / interleaverSize > blockNum) {
             process();
             blockNum++;
 
@@ -170,11 +183,11 @@ public class VoipLayer {
     public void process(){ //todo - rename
 
         //Un-interleave
-        unInterleavedPackets = (unInterleave(interleavedPackets, 3));
+        unInterleavedPackets = (unInterleave(interleavedPackets, interleaverDepth));
 
         // Remove numbered header
         byte[] lastFilled = null;
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < interleaverSize; i++) {
             byte[] bytes = unInterleavedPackets[i];
 
             if(bytes == null) {
@@ -240,7 +253,7 @@ public class VoipLayer {
 
 
     public static void main(String[] args) {
-        VoipLayer test = new VoipLayer(true, false, false);
+        VoipLayer test = new VoipLayer(true, 3, false);
         //for (int i = 0; i < 9; i++) {
         //    //TEST - Ensure interleaver working correctly
         //    ByteBuffer testBuff = ByteBuffer.wrap(test.getVoipBlock());
@@ -276,7 +289,7 @@ public class VoipLayer {
             }
         }
 
-        byte[][] interleavedPackets = new byte[9][];
+        byte[][] interleavedPackets = new byte[interleaverSize][];
         count = 0;
         for (int i = 0; i < blockSize; i++) {
             for (int j = 0; j < blockSize; j++) {
@@ -306,7 +319,7 @@ public class VoipLayer {
             }
         }
 
-        byte[][] unInterleavedPackets = new byte[9][];
+        byte[][] unInterleavedPackets = new byte[interleaverSize][];
         count = 0;
         for (int i = 0; i < blockSize; i++) {
             for (int j = 0; j < blockSize; j++) {

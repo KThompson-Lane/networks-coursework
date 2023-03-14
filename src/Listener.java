@@ -14,7 +14,7 @@ public class Listener implements Runnable {
     private final SecurityLayer securityLayer;
     private final VoipLayer voipLayer;
 
-    public Listener(int portNum, long key, int socketNum, boolean interleaving, boolean compensate, boolean decrypt) {
+    public Listener(int portNum, long key, int socketNum, int interleaverDepth, boolean compensate, boolean decrypt) {
 
         //  Set up Receiving Socket
         try{
@@ -48,7 +48,7 @@ public class Listener implements Runnable {
         //  Set up security layer
         securityLayer = new SecurityLayer(key, decrypt);
         //  Set up VOIP layer
-        voipLayer = new VoipLayer(true, interleaving, compensate);
+        voipLayer = new VoipLayer(true, interleaverDepth, compensate);
     }
     public void Start()
     {
