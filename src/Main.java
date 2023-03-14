@@ -15,7 +15,7 @@ public class Main {
         boolean Host, Encrypt = false, Decrypt = false;
         int socketNum = 1;
         //  Interleaving & compensation
-        boolean interleaving = false;
+        int interleaverDepth = 0;
         //  Just compensation
         boolean compensate = false;
 
@@ -37,11 +37,11 @@ public class Main {
             switch (reader.readLine()) {
                 case "2" -> {
                     socketNum = 2;
-                    interleaving = true;
+                    interleaverDepth = 3;
                 }
                 case "3" -> {
                     socketNum = 3;
-                    interleaving = true;
+                    interleaverDepth = 2;
                 }
                 case "4" -> {
                     socketNum = 4;
@@ -102,9 +102,9 @@ public class Main {
 
         //2: Set up our speak and listener threads
         //  New thread for listen, passing our port number and secret key
-        Listener listener = new Listener(destinationPort, secretKey, socketNum, interleaving, compensate, Decrypt);
+        Listener listener = new Listener(destinationPort, secretKey, socketNum, interleaverDepth, compensate, Decrypt);
         //  New thread for speak, passing our IP address and port along with our secret key
-        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, interleaving, compensate, Encrypt);
+        Speaker speaker = new Speaker(destinationPort, destinationAddress, secretKey, socketNum, interleaverDepth, compensate, Encrypt);
 
         //  Run these threads in a loop
         listener.Start();

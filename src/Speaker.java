@@ -12,7 +12,7 @@ public class Speaker implements Runnable {
     private final VoipLayer voipLayer;
     private final SecurityLayer securityLayer;
 
-    public Speaker(int portNum, InetAddress destAddress, long key, int socketNum, boolean interleaving, boolean compensate, boolean encrypt) {
+    public Speaker(int portNum, InetAddress destAddress, long key, int socketNum, int interleaverDepth, boolean compensate, boolean encrypt) {
         //  Set port number to argument
         this.port = portNum;
         //  Setup client IP from argument
@@ -43,7 +43,7 @@ public class Speaker implements Runnable {
             System.exit(0);
         }
         //  Set up VOIP layer
-        voipLayer = new VoipLayer(false, interleaving, compensate);
+        voipLayer = new VoipLayer(false, interleaverDepth, compensate);
         //  Set up Security layer
         securityLayer = new SecurityLayer(key, encrypt);
     }
