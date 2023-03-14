@@ -23,21 +23,25 @@ public class Authenticator {
     //Authenticate takes a signed packet verifies its authenticity
     public byte[] Authenticate(final byte[] signedPacket) throws UnableToAuthenticateException
     {
-        // Wrap the signed packet in a ByteBuffer
-        ByteBuffer buffer = ByteBuffer.wrap(signedPacket);
-        //  Get the packet signature
-        int packetSignature = buffer.getInt();
-        byte[] packetData = new byte[signedPacket.length - 4];
-        buffer.get(4, packetData);
 
-        //  Recalculate our hash code
-        int hashCode = calculateHash(packetData);
+        //  Try and authenticate, catching any exception and throwing our own
+        try{
+            // Wrap the signed packet in a ByteBuffer
+            ByteBuffer buffer = ByteBuffer.wrap(signedPacket);
+            //  Get the packet signature
+            int packetSignature = buffer.getInt();
+            byte[] packetData = new byte[signedPacket.length - 4];
+            buffer.get(4, packetData);
 
-        //  Check our calculated hash code against the signature
-        if(packetSignature == hashCode)
-            return packetData;
-        else
-            throw new UnableToAuthenticateException("Unable to verify packet authenticity!");
+            //  Recalculate our hash code
+            int hashCode = calculateHash(packetData);
+
+            //  Check our calculated hash code against the signature
+            if(packetSignature == hashCode)
+                return packetData;
+        } catch (Exception ignored) {
+        }
+        throw new UnableToAuthenticateException("Unable to verify packet authenticity!");
     }
 
     private int calculateHash(final byte[] data)
