@@ -9,9 +9,6 @@ public class SimpleEncryption {
     private static final int[] SKP = { 6, 3, 7, 4, 8, 5, 10, 9 };
     private static String[] Keys;
 
-    private static String FirstKey;
-    private static String SecondKey;
-
     private static final int[] InitialPermutation = { 2, 6, 3, 1, 4, 8, 5, 7 };
     private static final int[] ExpansionPermutation = { 4, 1, 2, 3, 2, 3, 4, 1 };
     private static final int[] StraightPermutation = { 2, 4, 3, 1 };
@@ -44,13 +41,18 @@ public class SimpleEncryption {
     //  Generate keys using permutation tables FKP and SKP and bit-shifts
     public static void GenerateKeys(final long inputKey)
     {
-        //  Take our master key and use the first 10 bits to generate our keys
+        //  Take our master key and use the first 20 bits to generate our 4 keys
         int hashedKey = Long.hashCode(inputKey);
-        String fullKey = ToPaddedBinaryString(hashedKey, 32);
+        String fullKey = ToPaddedBinaryString(hashedKey, 20);
         Keys = new String[4];
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < 2; i++)
         {
-            Keys[i] = fullKey.substring(i*8, (i+1)*8);
+            String key = fullKey.substring(i*10, (i+1)*10);
+            key = Permute(key, FKP);
+            key = LeftShift(key.substring(0,5), 1) + LeftShift(key.substring(5), 1);
+            Keys[i] = Permute(key, SKP);
+            key = LeftShift(key.substring(0,5), 2) + LeftShift(key.substring(5), 2);
+            Keys[i+2] = Permute(key, SKP);
         }
     }
 
@@ -133,7 +135,6 @@ public class SimpleEncryption {
         {
             //  Do N key round
             data = Round(data, Keys[round]);
-
             //  Swap left and right halves
             data = data.substring(data.length()/2) + data.substring(0, data.length()/2);
         }
